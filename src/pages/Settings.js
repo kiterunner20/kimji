@@ -376,7 +376,7 @@ const Settings = () => {
     <SettingsContainer>
       <Title>Settings</Title>
       <Subheading>
-        Customize your TransformWeek experience to fit your needs.
+        Customize your Kimji ❤️ experience to fit your needs.
       </Subheading>
       
       <SettingsCard>
@@ -509,7 +509,7 @@ const Settings = () => {
         </ExportButton>
         
         <SettingDescription>
-          Download all your TransformWeek data including tasks, progress, and settings.
+          Download all your Kimji ❤️ data including tasks, progress, and settings.
         </SettingDescription>
       </SettingsCard>
       

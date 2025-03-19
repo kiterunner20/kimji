@@ -128,7 +128,7 @@ const Header = () => {
   return (
     <HeaderContainer>
       <Nav>
-        <Logo>TransformWeek</Logo>
+        <Logo>Kimji ❤️</Logo>
         
         <MenuButton onClick={() => setMenuOpen(!menuOpen)}>
           {menuOpen ? <FaTimes /> : <FaBars />}
