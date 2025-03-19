@@ -10,7 +10,6 @@ import Reflection from './pages/Reflection';
 import Settings from './pages/Settings';
 import PartnerView from './pages/PartnerView';
 import ShareSettings from './pages/ShareSettings';
-import Login from './pages/Login';
 import PrivateRoute from './components/PrivateRoute';
 
 // Components
@@ -29,7 +28,6 @@ function App() {
         <Header />
         <main className="container">
           <Routes>
-            <Route path="/login" element={<Login />} />
             <Route path="/partner/:token" element={<PartnerView />} />
             <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} />
             <Route path="/progress" element={<PrivateRoute><Progress /></PrivateRoute>} />

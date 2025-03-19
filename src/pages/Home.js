@@ -86,10 +86,6 @@ const TasksSection = styled.div`
   margin-top: 2rem;
 `;
 
-const TasksList = styled.div`
-  margin-top: 1rem;
-`;
-
 const EmptyState = styled.div`
   text-align: center;
   padding: 3rem 1rem;
@@ -391,14 +387,14 @@ const ToggleFormButton = styled.button`
 `;
 
 const CategorySection = styled.div`
-  margin-bottom: 1.5rem;
-  background-color: white;
+  background: white;
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
+  margin-bottom: 1.5rem;
   overflow: hidden;
   
   @media (prefers-color-scheme: dark) {
-    background-color: var(--gray-800);
+    background: var(--gray-800);
   }
 `;
 
@@ -579,6 +575,221 @@ const CategoryProgressFill = styled.div`
   transition: width 0.3s ease;
 `;
 
+// Add these new styled components for the simplified task list
+const TaskListContainer = styled.div`
+  background-color: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  margin: 2rem 0;
+  padding: ${props => props.isExpanded ? '1.5rem' : '1.5rem 1.5rem 0.5rem 1.5rem'};
+  overflow: hidden;
+  
+  @media (prefers-color-scheme: dark) {
+    background-color: var(--gray-800);
+  }
+`;
+
+const TaskListTitle = styled.h3`
+  font-size: 1.2rem;
+  margin-bottom: ${props => props.isExpanded ? '1rem' : '0'};
+  color: var(--gray-900);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  border-bottom: ${props => props.isExpanded ? '1px solid var(--gray-200)' : 'none'};
+  padding-bottom: ${props => props.isExpanded ? '0.5rem' : '0'};
+  
+  .title-content {
+    display: flex;
+    align-items: center;
+  }
+  
+  svg {
+    margin-right: 0.5rem;
+    color: var(--primary);
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    color: var(--gray-100);
+    border-bottom-color: ${props => props.isExpanded ? 'var(--gray-700)' : 'none'};
+  }
+`;
+
+const TaskListContent = styled.div`
+  max-height: ${props => props.isExpanded ? '2000px' : '0'};
+  opacity: ${props => props.isExpanded ? '1' : '0'};
+  transition: all 0.3s ease;
+  overflow: hidden;
+`;
+
+const TaskItem = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--gray-200);
+  
+  &:last-child {
+    border-bottom: none;
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    border-color: var(--gray-700);
+  }
+`;
+
+const TaskCheckbox = styled.div`
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 2px solid ${props => props.completed ? 'var(--success)' : 'var(--gray-400)'};
+  background-color: ${props => props.completed ? 'var(--success)' : 'transparent'};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  margin-right: 1rem;
+  cursor: pointer;
+  transition: var(--transition);
+  
+  &:hover {
+    border-color: var(--primary);
+    transform: scale(1.05);
+  }
+`;
+
+const TaskDetails = styled.div`
+  flex: 1;
+`;
+
+const TaskName = styled.div`
+  font-weight: 500;
+  color: var(--gray-900);
+  text-decoration: ${props => props.completed ? 'line-through' : 'none'};
+  opacity: ${props => props.completed ? 0.7 : 1};
+  
+  @media (prefers-color-scheme: dark) {
+    color: var(--gray-100);
+  }
+`;
+
+const TaskTag = styled.span`
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  margin-right: 0.5rem;
+  background-color: ${props => {
+    switch(props.category) {
+      case 'personal_growth': return 'rgba(79, 70, 229, 0.15)';
+      case 'emotional_health': return 'rgba(236, 72, 153, 0.15)';
+      case 'mental_fitness': return 'rgba(16, 185, 129, 0.15)';
+      case 'physical_health': return 'rgba(239, 68, 68, 0.15)';
+      case 'relationships': return 'rgba(245, 158, 11, 0.15)';
+      case 'social': return 'rgba(59, 130, 246, 0.15)';
+      case 'financial': return 'rgba(139, 92, 246, 0.15)';
+      case 'mindfulness': return 'rgba(91, 33, 182, 0.15)';
+      default: return 'var(--gray-200)';
+    }
+  }};
+  color: ${props => {
+    switch(props.category) {
+      case 'personal_growth': return '#4F46E5';
+      case 'emotional_health': return '#EC4899';
+      case 'mental_fitness': return '#10B981';
+      case 'physical_health': return '#EF4444';
+      case 'relationships': return '#F59E0B';
+      case 'social': return '#3B82F6';
+      case 'financial': return '#8B5CF6';
+      case 'mindfulness': return '#5B21B6';
+      default: return 'var(--gray-700)';
+    }
+  }};
+  
+  @media (prefers-color-scheme: dark) {
+    background-color: ${props => {
+      switch(props.category) {
+        case 'personal_growth': return 'rgba(79, 70, 229, 0.25)';
+        case 'emotional_health': return 'rgba(236, 72, 153, 0.25)';
+        case 'mental_fitness': return 'rgba(16, 185, 129, 0.25)';
+        case 'physical_health': return 'rgba(239, 68, 68, 0.25)';
+        case 'relationships': return 'rgba(245, 158, 11, 0.25)';
+        case 'social': return 'rgba(59, 130, 246, 0.25)';
+        case 'financial': return 'rgba(139, 92, 246, 0.25)';
+        case 'mindfulness': return 'rgba(91, 33, 182, 0.25)';
+        default: return 'var(--gray-700)';
+      }
+    }};
+  }
+`;
+
+const TaskCategoryLabel = styled.span`
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  margin-right: 0.5rem;
+  margin-bottom: 0.25rem;
+  background-color: ${props => {
+    switch (props.category) {
+      case 'morning': return '#E0F2FE'; // Light blue
+      case 'afternoon': return '#FEF9C3'; // Light yellow
+      case 'evening': return '#E0E7FF'; // Light indigo
+      case 'all-day': return '#F3E8FF'; // Light purple
+      default: return 'var(--gray-200)';
+    }
+  }};
+  color: ${props => {
+    switch (props.category) {
+      case 'morning': return '#0369A1'; // Darker blue
+      case 'afternoon': return '#A16207'; // Darker yellow
+      case 'evening': return '#4338CA'; // Darker indigo
+      case 'all-day': return '#7E22CE'; // Darker purple
+      default: return 'var(--gray-700)';
+    }
+  }};
+  
+  @media (prefers-color-scheme: dark) {
+    background-color: ${props => {
+      switch (props.category) {
+        case 'morning': return '#0C4A6E'; // Darker blue
+        case 'afternoon': return '#713F12'; // Darker yellow
+        case 'evening': return '#312E81'; // Darker indigo
+        case 'all-day': return '#581C87'; // Darker purple
+        default: return 'var(--gray-700)';
+      }
+    }};
+    color: ${props => {
+      switch (props.category) {
+        case 'morning': return '#BAE6FD'; // Lighter blue
+        case 'afternoon': return '#FEF08A'; // Lighter yellow
+        case 'evening': return '#C7D2FE'; // Lighter indigo
+        case 'all-day': return '#E9D5FF'; // Lighter purple
+        default: return 'var(--gray-300)';
+      }
+    }};
+  }
+`;
+
+const TaskPoints = styled.span`
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  margin-right: 0.5rem;
+  background-color: #ECFDF5; // Light green
+  color: #047857; // Darker green
+  display: flex;
+  align-items: center;
+  
+  @media (prefers-color-scheme: dark) {
+    background-color: #064E3B; // Darker green
+    color: #A7F3D0; // Lighter green
+  }
+  
+  svg {
+    margin-right: 3px;
+    font-size: 0.6rem;
+  }
+`;
+
 // Helper to get category icon
 const getCategoryIcon = (category) => {
   switch(category) {
@@ -616,8 +827,6 @@ const Home = () => {
     calculateDayScore, 
     dispatch, 
     taskCategories,
-    categoryPoints,
-    defaultReminderTimes,
     getTasksByCategory
   } = useAppContext();
   
@@ -630,12 +839,15 @@ const Home = () => {
     points: 10
   });
   
+  // Add state for checklist expanded
+  const [checklistExpanded, setChecklistExpanded] = useState(false);
+  
   // State to track open/closed categories
   const [openCategories, setOpenCategories] = useState({
-    [taskCategories.PERSONAL_GROWTH]: true,
-    [taskCategories.EMOTIONAL_HEALTH]: true,
-    [taskCategories.MENTAL_FITNESS]: true,
-    [taskCategories.PHYSICAL_HEALTH]: true,
+    [taskCategories.PERSONAL_GROWTH]: false,
+    [taskCategories.EMOTIONAL_HEALTH]: false,
+    [taskCategories.MENTAL_FITNESS]: false,
+    [taskCategories.PHYSICAL_HEALTH]: false,
     [taskCategories.RELATIONSHIPS]: false,
     [taskCategories.SOCIAL]: false,
     [taskCategories.FINANCIAL]: false,
@@ -687,11 +899,8 @@ const Home = () => {
     // Hide form
     setShowAddTaskForm(false);
     
-    // Ensure the custom tasks category is expanded
-    setOpenCategories({
-      ...openCategories,
-      custom: true
-    });
+    // No need to ensure custom category is expanded
+    // We want to keep everything collapsed as per user's preference
   };
   
   // Get custom tasks
@@ -795,6 +1004,60 @@ const Home = () => {
                 <small>{upcomingTask.description}</small>
               </ReminderText>
             </Reminder>
+          )}
+          
+          {/* Add the Task List with checkboxes */}
+          {todayPlan && todayPlan.tasks && todayPlan.tasks.length > 0 && (
+            <TaskListContainer isExpanded={checklistExpanded}>
+              <TaskListTitle 
+                isExpanded={checklistExpanded}
+                onClick={() => setChecklistExpanded(!checklistExpanded)}
+              >
+                <div className="title-content">
+                  <FaCheck /> Daily Task Checklist
+                </div>
+                <ExpandButton>
+                  {checklistExpanded ? <FaChevronUp /> : <FaChevronDown />}
+                </ExpandButton>
+              </TaskListTitle>
+              
+              <TaskListContent isExpanded={checklistExpanded}>
+                {todayPlan.tasks.map(task => (
+                  <TaskItem key={task.id}>
+                    <TaskCheckbox 
+                      completed={task.completed}
+                      onClick={() => dispatch({
+                        type: 'TOGGLE_TASK',
+                        payload: { 
+                          taskId: task.id,
+                          dispatch
+                        }
+                      })}
+                    >
+                      {task.completed && <FaCheck />}
+                    </TaskCheckbox>
+                    
+                    <TaskDetails>
+                      <TaskName completed={task.completed}>
+                        {task.title}
+                      </TaskName>
+                      <div style={{ display: 'flex', marginTop: '0.25rem', flexWrap: 'wrap' }}>
+                        <TaskTag category={task.taskCategory}>
+                          {getCategoryDisplayName(task.taskCategory)}
+                        </TaskTag>
+                        <TaskCategoryLabel category={task.category || 'all-day'}>
+                          {!task.category || task.category === 'all-day' ? 'All Day' : 
+                           task.category.charAt(0).toUpperCase() + task.category.slice(1)}
+                        </TaskCategoryLabel>
+                        <TaskPoints>
+                          <FaTrophy /> {task.points || 10} pts
+                        </TaskPoints>
+                      </div>
+                    </TaskDetails>
+                  </TaskItem>
+                ))}
+              </TaskListContent>
+            </TaskListContainer>
           )}
           
           {showAddTaskForm ? (

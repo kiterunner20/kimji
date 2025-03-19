@@ -395,12 +395,19 @@ function reducer(state, action) {
       return { ...state, currentDay: action.payload };
     
     case 'TOGGLE_TASK': {
+      const { taskId } = action.payload;
+      
+      // Extract the day from the task ID (format: day{X}_category_name)
+      const dayMatch = taskId.match(/^day(\d+)_/);
+      const taskDay = dayMatch ? parseInt(dayMatch[1]) : state.currentDay;
+      
       const updatedWeekPlan = state.weekPlan.map(day => {
-        if (day.day === state.currentDay) {
+        // Only update the task in its specific day
+        if (day.day === taskDay) {
           return {
             ...day,
             tasks: day.tasks.map(task => {
-              if (task.id === action.payload.taskId) {
+              if (task.id === taskId) {
                 const newCompletedState = !task.completed;
                 
                 // If task is being marked as complete, add to history
@@ -409,7 +416,7 @@ function reducer(state, action) {
                     taskId: task.id,
                     taskTitle: task.title,
                     taskCategory: task.taskCategory || 'uncategorized',
-                    dayCompleted: state.currentDay,
+                    dayCompleted: taskDay,
                     dateCompleted: new Date().toISOString(),
                     points: task.points || 10
                   };
@@ -482,12 +489,19 @@ function reducer(state, action) {
       };
     
     case 'UPDATE_TASK': {
+      const { taskId } = action.payload;
+      
+      // Extract the day from the task ID (format: day{X}_category_name)
+      const dayMatch = taskId.match(/^day(\d+)_/);
+      const taskDay = dayMatch ? parseInt(dayMatch[1]) : state.currentDay;
+      
       const updatedWeekPlan = state.weekPlan.map(day => {
-        if (day.day === state.currentDay) {
+        // Only update the task in its specific day
+        if (day.day === taskDay) {
           return {
             ...day,
             tasks: day.tasks.map(task => 
-              task.id === action.payload.taskId 
+              task.id === taskId 
                 ? { ...task, ...action.payload.data }
                 : task
             )
@@ -514,10 +528,12 @@ function reducer(state, action) {
       };
     
     case 'ADD_CUSTOM_TASK': {
-      // Create a proper task ID
+      // Get the day to add this task to
+      const customDay = action.payload.day || state.currentDay;
+      
+      // Create a proper task ID that includes the day
       const customTaskCategory = action.payload.taskCategory || 'custom';
       const taskName = action.payload.title.toLowerCase().replace(/\s+/g, '_');
-      const customDay = action.payload.day || state.currentDay;
       const taskId = createTaskId(customDay, customTaskCategory, taskName + '_' + Date.now().toString(36));
       
       const customTask = {
@@ -536,7 +552,7 @@ function reducer(state, action) {
       // Add to custom tasks list
       const updatedCustomTasks = [...state.customTasks, customTask];
       
-      // Also add to the current week plan for immediate display
+      // Only add to the specific day in the week plan
       const weekPlanWithCustomTask = state.weekPlan.map(day => {
         if (day.day === customDay) {
           return {
@@ -555,22 +571,25 @@ function reducer(state, action) {
     }
     
     case 'DELETE_TASK': {
-      const taskId = action.payload.taskId;
+      const { taskId } = action.payload;
+      
+      // Extract the day from the task ID (format: day{X}_category_name)
+      const dayMatch = taskId.match(/^day(\d+)_/);
+      const taskDay = dayMatch ? parseInt(dayMatch[1]) : state.currentDay;
       
       // First check if it's a custom task
       const isCustomTask = state.customTasks.some(task => task.id === taskId);
       
-      // Remove from weekPlan - note only remove from current day
+      // Remove from weekPlan - only remove from the specific day
       const weekPlanWithoutTask = state.weekPlan.map(day => {
-        // Only filter tasks in the current day if it's not a custom task
-        if (!isCustomTask && day.day !== state.currentDay) {
-          return day;
+        // Only filter tasks in the specific day
+        if (day.day === taskDay) {
+          return {
+            ...day,
+            tasks: day.tasks.filter(task => task.id !== taskId)
+          };
         }
-        
-        return {
-          ...day,
-          tasks: day.tasks.filter(task => task.id !== taskId)
-        };
+        return day;
       });
       
       // If it's a custom task, also remove from customTasks array
@@ -586,11 +605,15 @@ function reducer(state, action) {
     }
     
     case 'SET_TASK_REMINDER': {
-      const taskId = action.payload.taskId;
+      const { taskId } = action.payload;
       
-      // Only update the reminder for the task in the current day
+      // Extract the day from the task ID (format: day{X}_category_name)
+      const dayMatch = taskId.match(/^day(\d+)_/);
+      const taskDay = dayMatch ? parseInt(dayMatch[1]) : state.currentDay;
+      
+      // Only update the reminder for the task in the specific day
       const weekPlanWithReminder = state.weekPlan.map(day => {
-        if (day.day === state.currentDay) {
+        if (day.day === taskDay) {
           return {
             ...day,
             tasks: day.tasks.map(task => {
@@ -691,8 +714,22 @@ const calculateDayScore = (day) => {
 
 // Get all tasks for a specific category
 const getTasksByCategory = (day, category) => {
-  if (!day || !day.tasks) return [];
-  return day.tasks.filter(task => task.taskCategory === category);
+  if (!day || !day.tasks) {
+    console.log('No day or tasks found in getTasksByCategory', { day, category });
+    return [];
+  }
+  
+  console.log(`Getting tasks for category: ${category}`, day.tasks);
+  const filteredTasks = day.tasks.filter(task => task.taskCategory === category);
+  console.log(`Found ${filteredTasks.length} tasks for category ${category}`);
+  
+  // For debugging, if no tasks are found, return all tasks
+  if (filteredTasks.length === 0) {
+    console.log(`No tasks found for ${category}, returning all tasks for debugging`);
+    return day.tasks;
+  }
+  
+  return filteredTasks;
 };
 
 // Create context
@@ -700,7 +737,13 @@ const AppContext = createContext();
 
 // Provider component
 export const AppProvider = ({ children }) => {
-  const [state, dispatch] = useReducer(reducer, initialState);
+  // Initialize with weekTemplate directly to ensure we have data immediately
+  const [state, dispatch] = useReducer(reducer, {
+    ...initialState,
+    weekPlan: weekTemplate,
+    startDate: new Date().toISOString(),
+    categoryScores: {}
+  });
 
   // Initialize or load data from storage
   useEffect(() => {
@@ -726,15 +769,7 @@ export const AppProvider = ({ children }) => {
         }
       } catch (error) {
         console.error('Error loading data', error);
-        // Fallback to initial state with week template
-        dispatch({ 
-          type: 'INIT_DATA', 
-          payload: { 
-            weekPlan: weekTemplate,
-            startDate: new Date().toISOString(),
-            categoryScores: {}
-          }
-        });
+        // No need for fallback as we already initialized with weekTemplate
       }
     };
 

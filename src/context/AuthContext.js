@@ -8,33 +8,48 @@ import { signInWithGoogle, signInWithFacebook, signInWithEmail, signUpWithEmail,
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [userData, setUserData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // Create a default mock user and user data
+  const mockUser = {
+    uid: 'mock-user-id',
+    displayName: 'Demo User',
+    email: 'demo@example.com',
+    photoURL: null
+  };
+  
+  const mockUserData = {
+    displayName: 'Demo User',
+    email: 'demo@example.com',
+    photoURL: null,
+    shareToken: 'demo-share-token',
+    shareSettings: {
+      isEnabled: false,
+      categories: {
+        personal_growth: true,
+        emotional_health: true,
+        mental_fitness: true,
+        physical_health: true,
+        relationships: true,
+        social: true,
+        financial: false,
+        mindfulness: true
+      },
+      dailySummary: false,
+      partnerEmail: ''
+    }
+  };
+
+  const [currentUser, setCurrentUser] = useState(mockUser);
+  const [userData, setUserData] = useState(mockUserData);
+  const [loading, setLoading] = useState(false); // Set to false initially to avoid loading state
   const [error, setError] = useState(null);
 
+  // Skip the actual authentication process
   useEffect(() => {
-    // Listen for auth state changes
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setCurrentUser(user);
-      
-      if (user) {
-        try {
-          // Load user data from Firestore
-          const data = await getUserData(user.uid);
-          setUserData(data);
-        } catch (err) {
-          console.error("Error loading user data:", err);
-        }
-      } else {
-        setUserData(null);
-      }
-      
-      setLoading(false);
-    });
-
-    // Cleanup subscription
-    return () => unsubscribe();
+    // No need to listen for auth state changes or subscribe to anything
+    setLoading(false);
+    
+    // Return empty function for cleanup
+    return () => {};
   }, []);
 
   // Sign in methods
@@ -120,7 +135,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children} {/* Remove the loading check */}
     </AuthContext.Provider>
   );
 };
