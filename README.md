@@ -103,3 +103,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - Icons provided by [React Icons](https://react-icons.github.io/react-icons/)
 - Inspiration from various habit tracking and mindfulness apps
+# kimji
