@@ -1,70 +1,105 @@
-# Getting Started with Create React App
+# TransformWeek
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A habit-tracking and mindfulness app focused on executing a structured 7-day self-improvement plan, with nudges, progress analytics, and extensibility.
 
-## Available Scripts
+## Features
 
-In the project directory, you can run:
+### Daily Task Management
+- Structured 7-day program with daily tasks
+- Interactive task checklist system
+- Expandable task cards with details and tracking
+- Automatic or manual day progression
 
-### `npm start`
+### Trackers & Logging
+- Hydration tracking (water intake)
+- Workout duration tracking
+- Expense monitoring
+- Gratitude journaling
+- Emotion/mood tracking
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### Progress Analytics
+- Visual progress summaries
+- Completion statistics
+- Habit streaks
+- Week-in-review insights
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### Reflection Tools
+- Daily self-reflection journaling
+- Gratitude exercises
+- Insights capture
 
-### `npm test`
+### Customization
+- Profile settings
+- Notification preferences
+- Dark/light mode
+- Data export
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Getting Started
 
-### `npm run build`
+### Prerequisites
+- Node.js 14.0 or higher
+- npm or yarn
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Installation
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/transform-week.git
+cd transform-week
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+2. Install dependencies:
+```bash
+npm install
+```
 
-### `npm run eject`
+3. Start the development server:
+```bash
+npm start
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+The app will be available at http://localhost:3000.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Project Structure
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+```
+transform-week/
+├── public/
+├── src/
+│   ├── components/       # Reusable UI components
+│   │   ├── trackers/     # Task-specific trackers
+│   ├── context/          # Global state management
+│   ├── pages/            # Main application pages
+│   ├── utils/            # Helper functions
+│   ├── App.js            # Main application component
+│   └── index.js          # Application entry point
+└── package.json
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## Extending the App
 
-## Learn More
+### Adding New Task Types
+1. Define the task type in the weekly template in `context/AppContext.js`
+2. Create a new tracker component in `components/trackers/`
+3. Add the tracker to the `renderTracker` function in `TaskCard.js`
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### Adding New Days
+1. Modify the week template array in `context/AppContext.js`
+2. Update the day selector in `components/DaySelector.js`
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Technologies Used
 
-### Code Splitting
+- React
+- React Router
+- Styled Components
+- LocalForage (for data persistence)
+- React Icons
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## License
 
-### Analyzing the Bundle Size
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## Acknowledgements
 
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+- Icons provided by [React Icons](https://react-icons.github.io/react-icons/)
+- Inspiration from various habit tracking and mindfulness apps
