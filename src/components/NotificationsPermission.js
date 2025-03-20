@@ -131,9 +131,9 @@ const NotificationsPermission = () => {
     Notification.requestPermission().then(permission => {
       if (permission === "granted") {
         // Create a test notification to confirm it works
-        new Notification("TransformWeek", {
-          body: "Notifications are now enabled for task reminders!",
-          icon: "/favicon.ico"
+        new Notification("Kimji Transform", {
+          body: "Notifications are working correctly!",
+          icon: "/logo192.png"
         });
       }
       

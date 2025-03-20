@@ -93,7 +93,7 @@ const Login = () => {
 
   return (
     <LoginContainer>
-      <LoginHeader>Transform Week</LoginHeader>
+      <LoginHeader>Kimji Transform</LoginHeader>
       {error && <ErrorMessage>{error}</ErrorMessage>}
       <LoginForm onSubmit={handleLogin}>
         <LoginInput 

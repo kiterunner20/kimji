@@ -2,10 +2,11 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { useAppContext } from './context/AppContext';
 import { AuthProvider } from './context/AuthContext';
+import ThemeProvider from './context/ThemeProvider';
 
 // Pages
 import Home from './pages/Home';
-import Progress from './pages/Progress';
+import Progress from './components/Progress';
 import Reflection from './pages/Reflection';
 import Settings from './pages/Settings';
 import PartnerView from './pages/PartnerView';
@@ -24,21 +25,23 @@ function App() {
 
   return (
     <AuthProvider>
-      <div className={`app ${darkMode ? 'dark-mode' : ''}`}>
-        <Header />
-        <main className="container">
-          <Routes>
-            <Route path="/partner/:token" element={<PartnerView />} />
-            <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} />
-            <Route path="/progress" element={<PrivateRoute><Progress /></PrivateRoute>} />
-            <Route path="/reflection" element={<PrivateRoute><Reflection /></PrivateRoute>} />
-            <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
-            <Route path="/share" element={<PrivateRoute><ShareSettings /></PrivateRoute>} />
-          </Routes>
-        </main>
-        <Footer />
-        <NotificationsPermission />
-      </div>
+      <ThemeProvider>
+        <div className={`app ${darkMode ? 'dark-mode' : ''}`}>
+          <Header />
+          <main className="container">
+            <Routes>
+              <Route path="/partner/:token" element={<PartnerView />} />
+              <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} />
+              <Route path="/progress" element={<PrivateRoute><Progress /></PrivateRoute>} />
+              <Route path="/reflection" element={<PrivateRoute><Reflection /></PrivateRoute>} />
+              <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
+              <Route path="/share" element={<PrivateRoute><ShareSettings /></PrivateRoute>} />
+            </Routes>
+          </main>
+          <Footer />
+          <NotificationsPermission />
+        </div>
+      </ThemeProvider>
     </AuthProvider>
   );
 }

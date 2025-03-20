@@ -1,11 +1,11 @@
-# TransformWeek
+# Kimji TransformWeek
 
-A habit-tracking and mindfulness app focused on executing a structured 7-day self-improvement plan, with nudges, progress analytics, and extensibility.
+A Kimji-powered habit-tracking and mindfulness app focused on executing a structured 21-day self-improvement plan, with nudges, progress analytics, and extensibility.
 
 ## Features
 
 ### Daily Task Management
-- Structured 7-day program with daily tasks
+- Structured 21-day program with daily tasks
 - Interactive task checklist system
 - Expandable task cards with details and tracking
 - Automatic or manual day progression
@@ -103,4 +103,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - Icons provided by [React Icons](https://react-icons.github.io/react-icons/)
 - Inspiration from various habit tracking and mindfulness apps
-# kimji
+- Developed by Kimji

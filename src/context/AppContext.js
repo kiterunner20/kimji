@@ -43,21 +43,23 @@ const defaultReminderTimes = {
   [taskCategories.SOCIAL]: '19:00',
 };
 
-// Initial template for our 7-day program with transformative tasks
+// Initial template for our 21-day program with transformative tasks
 const generateWeekTemplate = () => {
-  return [1, 2, 3, 4, 5, 6, 7].map(day => {
-    return {
-      day,
+  console.log("Generating week template...");
+  
+  const weekPlan = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21].map(day => {
+    const dayPlan = {
+      day: day,
       title: getDayTitle(day),
       tasks: [
         // Personal Growth category
         {
-          id: createTaskId(day, taskCategories.PERSONAL_GROWTH, 'learn_new_skill'),
+          id: createTaskId(day, taskCategories.PERSONAL_GROWTH, 'learn_skill'),
           title: "Learn New Skill",
-          description: "Spend 15 minutes learning a new skill (language, coding, instrument)",
+          description: "Spend 15 minutes learning a new skill",
           completed: false,
           type: "learning",
-          category: "afternoon",
+          category: "morning",
           taskCategory: taskCategories.PERSONAL_GROWTH,
           points: categoryPoints[taskCategories.PERSONAL_GROWTH],
           reminder: null
@@ -337,25 +339,54 @@ const generateWeekTemplate = () => {
         }
       ]
     };
+    
+    return dayPlan;
   });
+  
+  console.log(`Generated week template with ${weekPlan.length} days`);
+  console.log(`First day has ${weekPlan[0].tasks.length} tasks`);
+  
+  return weekPlan;
 };
 
 // Helper function to get day title
 function getDayTitle(day) {
-  const titles = [
-    "Foundation Day",
-    "Mind & Body",
-    "Productivity Focus",
-    "Wellness Wednesday",
-    "Growth Day",
-    "Connection Day",
-    "Reflection & Reset"
-  ];
-  return titles[day - 1];
+  // Week 1: Foundation
+  if (day === 1) return "Foundation";
+  if (day === 2) return "Mind";
+  if (day === 3) return "Productivity";
+  if (day === 4) return "Wellness";
+  if (day === 5) return "Growth";
+  if (day === 6) return "Connection";
+  if (day === 7) return "Reflection";
+  
+  // Week 2: Expansion
+  if (day === 8) return "Adaptation";
+  if (day === 9) return "Exploration";
+  if (day === 10) return "Consistency";
+  if (day === 11) return "Momentum";
+  if (day === 12) return "Challenge";
+  if (day === 13) return "Breakthrough";
+  if (day === 14) return "Integration";
+  
+  // Week 3: Mastery
+  if (day === 15) return "Commitment";
+  if (day === 16) return "Discipline";
+  if (day === 17) return "Excellence";
+  if (day === 18) return "Balance";
+  if (day === 19) return "Wisdom";
+  if (day === 20) return "Transformation";
+  if (day === 21) return "Celebration";
+  
+  return "Day " + day;
 }
 
 // Generate the week template
 const weekTemplate = generateWeekTemplate();
+
+// Log the generated week template for debugging
+console.log("Generated weekTemplate:", weekTemplate);
+console.log("First day tasks:", weekTemplate[0]?.tasks?.length || 0);
 
 // Initial state
 const initialState = {
@@ -363,6 +394,7 @@ const initialState = {
   weekPlan: null,
   startDate: null,
   darkMode: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches,
+  theme: 'default', // Default theme
   notifications: true,
   notificationTimes: {
     morning: '07:00',
@@ -385,6 +417,73 @@ const initialState = {
   categoryScores: {}, // Store category-wise scores
 };
 
+// Theme definitions
+export const themes = {
+  default: {
+    id: 'default',
+    name: 'Default',
+    colors: {
+      primary: '#7c3aed', // Default violet
+      secondary: '#5b21b6',
+      accent: '#c4b5fd',
+    }
+  },
+  btsPink: {
+    id: 'btsPink',
+    name: 'BTS Pink',
+    colors: {
+      primary: '#ff0080', // BTS pink
+      secondary: '#cc0066',
+      accent: '#ffcceb',
+    }
+  },
+  cinnamonSatin: {
+    id: 'cinnamonSatin',
+    name: 'Cinnamon Satin',
+    colors: {
+      primary: '#CF6856', // Cinnamon satin pink
+      secondary: '#B34E3D',
+      accent: '#EECFC1',
+    }
+  },
+  roseMauve: {
+    id: 'roseMauve',
+    name: 'Rose Mauve',
+    colors: {
+      primary: '#D36A7E', // Rose/Mauve color
+      secondary: '#B05066',
+      accent: '#F5C6D0',
+    }
+  },
+  oceanBlue: {
+    id: 'oceanBlue',
+    name: 'Ocean Blue',
+    colors: {
+      primary: '#0ea5e9', // Sky blue
+      secondary: '#0284c7',
+      accent: '#bae6fd',
+    }
+  },
+  emeraldGreen: {
+    id: 'emeraldGreen',
+    name: 'Emerald Green',
+    colors: {
+      primary: '#10b981', // Emerald green
+      secondary: '#059669',
+      accent: '#a7f3d0',
+    }
+  },
+  sunsetOrange: {
+    id: 'sunsetOrange',
+    name: 'Sunset Orange',
+    colors: {
+      primary: '#f97316', // Orange
+      secondary: '#ea580c',
+      accent: '#fed7aa',
+    }
+  }
+};
+
 // Reducer function
 function reducer(state, action) {
   switch (action.type) {
@@ -392,7 +491,26 @@ function reducer(state, action) {
       return { ...state, ...action.payload };
     
     case 'SET_DAY':
-      return { ...state, currentDay: action.payload };
+      console.log(`AppContext: Setting day to ${action.payload}, previous day was ${state.currentDay}`);
+      
+      // Always clone state to ensure React detects the change
+      const newDay = Number(action.payload);
+      if (isNaN(newDay) || newDay < 1 || newDay > 21) {
+        console.error(`Invalid day value: ${action.payload}`);
+        return state;
+      }
+      
+      // Force a state change by creating a completely new state object
+      const newWeekPlan = state.weekPlan ? [...state.weekPlan] : null;
+      
+      return { 
+        ...state, 
+        currentDay: newDay,
+        // Force weekPlan to be a new reference to trigger re-renders 
+        weekPlan: newWeekPlan,
+        // Add a timestamp to ensure state is always different
+        lastUpdated: new Date().getTime()
+      };
     
     case 'TOGGLE_TASK': {
       const { taskId } = action.payload;
@@ -480,6 +598,27 @@ function reducer(state, action) {
           [category]: isComplete ? currentScore + points : Math.max(0, currentScore - points)
         }
       };
+    }
+    
+    case 'TOGGLE_TASK_COMPLETE': {
+      const { dayNumber, taskId, completed } = action.payload;
+      
+      const updatedWeekPlan = state.weekPlan.map(day => {
+        if (day.day === dayNumber) {
+          return {
+            ...day,
+            tasks: day.tasks.map(task => {
+              if (task.id === taskId) {
+                return { ...task, completed };
+              }
+              return task;
+            })
+          };
+        }
+        return day;
+      });
+      
+      return { ...state, weekPlan: updatedWeekPlan };
     }
     
     case 'ADD_TO_HISTORY':
@@ -639,6 +778,9 @@ function reducer(state, action) {
     case 'TOGGLE_DARK_MODE':
       return { ...state, darkMode: !state.darkMode };
     
+    case 'SET_THEME':
+      return { ...state, theme: action.payload };
+    
     case 'TOGGLE_NOTIFICATIONS':
       return { ...state, notifications: !state.notifications };
     
@@ -658,6 +800,16 @@ function reducer(state, action) {
           ...state.profile,
           ...action.payload
         }
+      };
+    
+    case 'RESET_DATA':
+      return {
+        ...state,
+        currentDay: 1,
+        weekPlan: generateWeekTemplate(),
+        profile: {},
+        darkMode: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches,
+        completedTasks: 0
       };
     
     default:
@@ -740,46 +892,81 @@ export const AppProvider = ({ children }) => {
   // Initialize with weekTemplate directly to ensure we have data immediately
   const [state, dispatch] = useReducer(reducer, {
     ...initialState,
-    weekPlan: weekTemplate,
+    weekPlan: weekTemplate || [], // Add fallback to empty array
     startDate: new Date().toISOString(),
     categoryScores: {}
   });
+
+  // Function to reset the application data
+  const resetAppData = () => {
+    const resetData = {
+      currentDay: 1,
+      weekPlan: generateWeekTemplate(),
+      profile: {},
+      darkMode: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches,
+      completedTasks: 0
+    };
+    
+    localforage.setItem('kimjiTransformData', resetData)
+      .then(() => {
+        dispatch({ type: 'RESET_DATA', payload: resetData });
+      })
+      .catch(error => {
+        console.error('Error resetting app data:', error);
+      });
+  };
+
+  // Create a safe version of state that ensures weekPlan is always an array
+  const safeState = {
+    ...state,
+    weekPlan: state.weekPlan || []
+  };
+
+  // Log the initial state for debugging
+  useEffect(() => {
+    console.log("AppProvider initial state:", state);
+    console.log("Initial weekPlan:", state.weekPlan || []);
+    console.log("Initial currentDay:", state.currentDay);
+  }, []);
 
   // Initialize or load data from storage
   useEffect(() => {
     const loadData = async () => {
       try {
-        const savedData = await localforage.getItem('transformWeekData');
+        const savedData = await localforage.getItem('kimjiTransformData');
         
         if (savedData) {
+          console.log("Loaded saved data:", savedData);
           dispatch({ type: 'INIT_DATA', payload: savedData });
         } else {
-          // First time initialization
-          const now = new Date();
-          dispatch({ 
-            type: 'INIT_DATA', 
-            payload: { 
-              weekPlan: weekTemplate,
-              startDate: now.toISOString(),
-              taskHistory: [],
-              customTasks: [],
-              categoryScores: {}
-            }
-          });
+          // Initialize with default template if no saved data
+          console.log("No saved data found, initializing with default template");
+          resetAppData();
         }
       } catch (error) {
-        console.error('Error loading data', error);
-        // No need for fallback as we already initialized with weekTemplate
+        console.error("Error loading data:", error);
+        resetAppData();
       }
     };
 
     loadData();
   }, []);
 
-  // Save state changes to storage
+  // Add a debug button to window for manual reset if needed
+  useEffect(() => {
+    window.resetAppData = resetAppData;
+    console.log("Debug function added. Run window.resetAppData() in console to reset app data");
+    
+    return () => {
+      delete window.resetAppData;
+    };
+  }, []);
+
+  // Save state changes to storage and log them
   useEffect(() => {
     if (state.weekPlan) {
-      localforage.setItem('transformWeekData', state);
+      console.log("Saving state to localforage:", state);
+      localforage.setItem('kimjiTransformData', state);
     }
   }, [state]);
 
@@ -803,7 +990,7 @@ export const AppProvider = ({ children }) => {
             // Show notification
             if ("Notification" in window) {
               if (Notification.permission === "granted") {
-                new Notification("TransformWeek Reminder", {
+                new Notification("Kimji Transform Reminder", {
                   body: `Time for: ${task.title}`,
                   icon: "/favicon.ico"
                 });
@@ -829,8 +1016,8 @@ export const AppProvider = ({ children }) => {
       const now = new Date();
       const diffDays = Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
       
-      // Ensure day is within the 7-day program
-      const newDay = Math.min(diffDays + 1, 7);
+      // Ensure day is within the 21-day program
+      const newDay = Math.min(diffDays + 1, 21);
       
       if (newDay !== state.currentDay) {
         dispatch({ type: 'SET_DAY', payload: newDay });
@@ -857,14 +1044,15 @@ export const AppProvider = ({ children }) => {
 
   return (
     <AppContext.Provider value={{ 
-      ...state, 
+      ...safeState, 
       dispatch,
       // Add helper functions that components can use
       calculateDayScore,
       getTasksByCategory,
       taskCategories,
       categoryPoints,
-      defaultReminderTimes
+      defaultReminderTimes,
+      themes
     }}>
       {children}
     </AppContext.Provider>
