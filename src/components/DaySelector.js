@@ -87,8 +87,9 @@ const ProgressIndicator = styled.div`
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 5px;
+  height: ${props => props.active ? '6px' : '5px'};
   background-color: ${props => props.active ? 'rgba(255, 255, 255, 0.3)' : 'var(--gray-200)'};
+  overflow: hidden;
   
   .dark-mode & {
     background-color: ${props => props.active ? 'rgba(255, 255, 255, 0.3)' : 'var(--gray-700)'};
@@ -103,7 +104,27 @@ const ProgressBar = styled.div`
     props.percent >= 40 ? 'var(--warning)' : 
     'var(--info)'
   };
-  transition: width var(--duration-md) var(--animation-standard);
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  
+  ${props => props.percent > 0 && `
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.15) 50%,
+        transparent 100%
+      );
+      background-size: 200% 100%;
+      animation: shimmer 2s infinite;
+    }
+  `}
   
   ${props => props.percent >= 100 && `
     position: relative;
@@ -126,15 +147,31 @@ const ProgressBar = styled.div`
       }
     }
   `}
+  
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
 `;
 
 const OverallProgress = styled.div`
   padding: var(--spacing-md) var(--spacing-lg);
   text-align: center;
   border-bottom: 1px solid var(--gray-200);
+  background-color: ${props => props.percent >= 80 ? 'rgba(16, 185, 129, 0.05)' : 
+                       props.percent >= 40 ? 'rgba(245, 158, 11, 0.05)' : 
+                       'rgba(99, 102, 241, 0.05)'};
+  transition: background-color 1s ease;
   
   .dark-mode & {
     border-bottom-color: var(--gray-700);
+    background-color: ${props => props.percent >= 80 ? 'rgba(16, 185, 129, 0.1)' : 
+                         props.percent >= 40 ? 'rgba(245, 158, 11, 0.1)' : 
+                         'rgba(99, 102, 241, 0.1)'};
   }
 `;
 
@@ -154,11 +191,13 @@ const ProgressBarContainer = styled.div`
   width: 100%;
   height: 10px;
   background-color: var(--gray-200);
-  border-radius: 5px;
+  border-radius: 10px;
   overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
   
   .dark-mode & {
     background-color: var(--gray-700);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
   }
 `;
 
@@ -272,44 +311,60 @@ const NavigationButton = styled.button`
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  background-color: white;
-  border: none;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  width: 36px;
-  height: 36px;
+  background-color: var(--primary);
+  color: white;
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
   z-index: 10;
-  box-shadow: var(--shadow-2);
-  opacity: 0.85;
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  cursor: pointer;
+  opacity: 0.9;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
   
   &:hover {
     opacity: 1;
-    transform: translateY(-50%) scale(1.1);
+    transform: translateY(-50%) scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   }
   
   &:active {
     transform: translateY(-50%) scale(0.95);
   }
   
-  &:focus {
-    outline: none;
-  }
-  
   &.prev {
-    left: 10px;
+    left: 8px;
   }
   
   &.next {
-    right: 10px;
+    right: 8px;
   }
   
-  .dark-mode & {
-    background-color: var(--gray-800);
-    color: var(--gray-200);
+  @media (max-width: 768px) {
+    width: 36px;
+    height: 36px;
+    
+    &.prev {
+      left: 5px;
+    }
+    
+    &.next {
+      right: 5px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    width: 32px;
+    height: 32px;
+  }
+  
+  svg {
+    width: 16px;
+    height: 16px;
   }
 `;
 
@@ -425,23 +480,91 @@ const DaySelector = () => {
 
   // Calculate percentage of completed days
   const getCompletionPercentage = (startDay, endDay) => {
-    if (!weekPlan) return 0;
+    if (!weekPlan || weekPlan.length === 0) {
+      console.log(`No week plan data available for days ${startDay}-${endDay}`);
+      return 0;
+    }
+
+    // Filter the days in the specified range
+    const daysInRange = weekPlan.filter(day => 
+      day.day >= startDay && day.day <= endDay
+    );
     
-    let completedDays = 0;
-    for (let day = startDay; day <= endDay; day++) {
-      if (getDayCompletionStatus(day)) {
-        completedDays++;
-      }
+    if (daysInRange.length === 0) {
+      console.log(`No days found in range ${startDay}-${endDay}`);
+      return 0;
+    }
+
+    let totalTasksCount = 0;
+    let completedTasksCount = 0;
+
+    // Count all tasks and completed tasks
+    daysInRange.forEach(day => {
+      const dayTasks = day.tasks || [];
+      
+      dayTasks.forEach(task => {
+        totalTasksCount++;
+        
+        if (task.completed) {
+          completedTasksCount++;
+        }
+      });
+    });
+
+    // Debug logs
+    console.log(`Progress for days ${startDay}-${endDay}:`);
+    console.log(`- Total tasks: ${totalTasksCount}`);
+    console.log(`- Completed tasks: ${completedTasksCount}`);
+    
+    // Calculate percentage (safeguard against division by zero)
+    if (totalTasksCount === 0) {
+      console.log(`No tasks found for days ${startDay}-${endDay}`);
+      return 0;
     }
     
-    return Math.round((completedDays / (endDay - startDay + 1)) * 100);
+    const percentage = Math.round((completedTasksCount / totalTasksCount) * 100);
+    console.log(`- Completion percentage: ${percentage}%`);
+    
+    return percentage;
   };
 
-  // Calculate overall progress
-  const overallProgress = getCompletionPercentage(1, 21);
-  const week1Progress = getCompletionPercentage(1, 7);
-  const week2Progress = getCompletionPercentage(8, 14);
-  const week3Progress = getCompletionPercentage(15, 21);
+  // Add memoization to prevent unnecessary re-calculation
+  const memoizedGetCompletionPercentage = (startDay, endDay) => {
+    // Use unique key for this calculation
+    const key = `progress-${startDay}-${endDay}`;
+    
+    // Return from cache if already calculated
+    if (progressCache.current[key] !== undefined && !forceProgressUpdate.current) {
+      return progressCache.current[key];
+    }
+    
+    const result = getCompletionPercentage(startDay, endDay);
+    progressCache.current[key] = result;
+    return result;
+  };
+
+  // Add these at the component level
+  const progressCache = useRef({});
+  const forceProgressUpdate = useRef(false);
+
+  // Reset the cache when the weekPlan changes
+  useEffect(() => {
+    progressCache.current = {};
+    forceProgressUpdate.current = true;
+    
+    // Reset the force update flag after a short delay
+    const timer = setTimeout(() => {
+      forceProgressUpdate.current = false;
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [weekPlan]);
+
+  // Calculate overall progress - use the memoized version
+  const overallProgress = memoizedGetCompletionPercentage(1, 21);
+  const week1Progress = memoizedGetCompletionPercentage(1, 7);
+  const week2Progress = memoizedGetCompletionPercentage(8, 14);
+  const week3Progress = memoizedGetCompletionPercentage(15, 21);
 
   // Add scrolling functionality
   const daysContainerRef = useRef(null);
@@ -467,30 +590,109 @@ const DaySelector = () => {
     });
   };
   
-  // Auto-scroll to current day on mount
+  // Add this function to programmatically scroll to a specific week
+  const scrollToActiveWeek = (weekNumber) => {
+    const container = daysContainerRef.current;
+    if (!container) return;
+    
+    // Calculate the scroll position based on the week
+    let scrollPosition;
+    switch (weekNumber) {
+      case 1:
+        scrollPosition = 0;
+        break;
+      case 2:
+        scrollPosition = container.scrollWidth / 3;
+        break;
+      case 3:
+        scrollPosition = (container.scrollWidth / 3) * 2;
+        break;
+      default:
+        scrollPosition = 0;
+    }
+    
+    container.scrollTo({
+      left: scrollPosition,
+      behavior: 'smooth'
+    });
+  };
+
+  // Modify the useEffect to also respond to activeWeek changes
   useEffect(() => {
-    setTimeout(() => {
-      scrollToDay(currentDay);
-    }, 300);
+    scrollToActiveWeek(activeWeek);
+  }, [activeWeek]);
+
+  // Add touch swipe functionality to the days container
+  useEffect(() => {
+    const container = daysContainerRef.current;
+    if (!container) return;
+    
+    let touchStartX = 0;
+    let touchEndX = 0;
+    
+    const handleTouchStart = (e) => {
+      touchStartX = e.touches[0].clientX;
+    };
+    
+    const handleTouchMove = (e) => {
+      touchEndX = e.touches[0].clientX;
+    };
+    
+    const handleTouchEnd = () => {
+      const SWIPE_THRESHOLD = 75; // Minimum distance required for a swipe
+      
+      if (touchStartX - touchEndX > SWIPE_THRESHOLD) {
+        // Swipe Left -> Go to next day
+        scrollRight();
+      } else if (touchEndX - touchStartX > SWIPE_THRESHOLD) {
+        // Swipe Right -> Go to previous day
+        scrollLeft();
+      }
+    };
+    
+    container.addEventListener('touchstart', handleTouchStart);
+    container.addEventListener('touchmove', handleTouchMove);
+    container.addEventListener('touchend', handleTouchEnd);
+    
+    return () => {
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchmove', handleTouchMove);
+      container.removeEventListener('touchend', handleTouchEnd);
+    };
   }, []);
-  
+
+  // Enhance the scroll functions to update the active week when navigating
   const scrollLeft = () => {
     const container = daysContainerRef.current;
     if (container) {
       container.scrollBy({
-        left: -200,
+        left: -210,
         behavior: 'smooth'
       });
+      
+      // Update the active week based on scroll direction
+      if (activeWeek > 1) {
+        setTimeout(() => {
+          setActiveWeek(prev => Math.max(prev - 1, 1));
+        }, 300);
+      }
     }
   };
-  
+
   const scrollRight = () => {
     const container = daysContainerRef.current;
     if (container) {
       container.scrollBy({
-        left: 200,
+        left: 210,
         behavior: 'smooth'
       });
+      
+      // Update the active week based on scroll direction
+      if (activeWeek < 3) {
+        setTimeout(() => {
+          setActiveWeek(prev => Math.min(prev + 1, 3));
+        }, 300);
+      }
     }
   };
 
@@ -505,6 +707,7 @@ const DaySelector = () => {
         <WeekTab 
           active={activeWeek === 1} 
           onClick={() => handleWeekChange(1)}
+          className="week-tab"
         >
           <WeekTabContent>
             <WeekTabTitle>Week 1: Foundation</WeekTabTitle>
@@ -517,6 +720,7 @@ const DaySelector = () => {
         <WeekTab 
           active={activeWeek === 2} 
           onClick={() => handleWeekChange(2)}
+          className="week-tab"
         >
           <WeekTabContent>
             <WeekTabTitle>Week 2: Expansion</WeekTabTitle>
@@ -529,6 +733,7 @@ const DaySelector = () => {
         <WeekTab 
           active={activeWeek === 3} 
           onClick={() => handleWeekChange(3)}
+          className="week-tab"
         >
           <WeekTabContent>
             <WeekTabTitle>Week 3: Mastery</WeekTabTitle>
@@ -540,7 +745,7 @@ const DaySelector = () => {
         </WeekTab>
       </WeekTabsContainer>
       
-      <OverallProgress>
+      <OverallProgress percent={overallProgress}>
         <ProgressLabel>Overall Progress: {overallProgress}%</ProgressLabel>
         <ProgressBarContainer>
           <ProgressBar percent={overallProgress} />

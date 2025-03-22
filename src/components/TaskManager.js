@@ -1239,8 +1239,6 @@ const TaskManager = () => {
     try {
       return (
         <div>
-          <SectionTitle>Today's Tasks</SectionTitle>
-          
           <TaskFilters>
             <FilterButton
               active={selectedCategory === 'all'}
