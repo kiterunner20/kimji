@@ -104,3 +104,21 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - Icons provided by [React Icons](https://react-icons.github.io/react-icons/)
 - Inspiration from various habit tracking and mindfulness apps
 - Developed by Kimji
+
+## Development Tools
+
+### Automatic PR Description Generator
+This project uses an automatic PR description generator to create consistent and informative pull request descriptions.
+
+#### Features
+- Automatically runs when you create a PR to the main branch
+- Categorizes changes based on commit types (features, fixes, etc.)
+- Creates a structured description with links to commits
+- Works with conventional commit format
+
+#### How It Works
+- When you submit a PR to the main branch, a GitHub workflow automatically runs
+- The workflow analyzes your commits and generates a formatted description
+- The description is automatically applied to your PR
+
+No manual action is required - the PR description is generated for you!
