@@ -58,6 +58,10 @@ const Logo = styled(Link)`
   span {
     margin-left: var(--spacing-xs);
   }
+  
+  svg {
+    font-size: 1.3rem;
+  }
 `;
 
 const MenuItems = styled.div`
@@ -220,13 +224,16 @@ const LogoText = styled.span`
   .app-name {
     font-weight: 700;
     display: block;
+    font-size: 1.2rem;
+    letter-spacing: -0.5px;
   }
   
   .app-tagline {
-    font-size: 0.65rem;
-    opacity: 0.7;
+    font-size: 0.7rem;
+    opacity: 0.65;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
   }
 `;
 
@@ -255,7 +262,7 @@ const Header = () => {
             <FaRegLightbulb />
             <LogoText>
               <span className="app-name">Kimji Transform</span>
-              <span className="app-tagline">21-Day Challenge</span>
+              <span className="app-tagline">Challenge</span>
             </LogoText>
           </Logo>
           

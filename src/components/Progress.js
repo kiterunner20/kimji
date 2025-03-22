@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useAppContext } from '../context/AppContext';
 import { 
@@ -20,11 +20,11 @@ import {
 } from 'react-icons/fa';
 
 const ProgressContainer = styled.div`
-  padding: 1.5rem;
+  padding: 1.75rem;
   background-color: white;
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-lg);
   box-shadow: var(--box-shadow);
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
   
   @media (prefers-color-scheme: dark) {
     background-color: var(--gray-800);
@@ -35,17 +35,20 @@ const ProgressHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
 `;
 
 const ProgressTitle = styled.h2`
-  font-size: 1.5rem;
-  font-weight: 600;
+  font-size: 1.75rem;
+  font-weight: 700;
   color: var(--gray-900);
   margin: 0;
+  font-family: var(--font-family-display);
   
   @media (prefers-color-scheme: dark) {
-    color: var(--gray-100);
+    color: var(--gray-50);
   }
 `;
 
@@ -53,7 +56,7 @@ const ViewSelector = styled.div`
   display: flex;
   background-color: var(--gray-100);
   border-radius: 2rem;
-  padding: 0.25rem;
+  padding: 0.3rem;
   
   @media (prefers-color-scheme: dark) {
     background-color: var(--gray-700);
@@ -65,8 +68,9 @@ const ViewButton = styled.button`
   color: ${props => props.active ? 'var(--primary)' : 'var(--gray-600)'};
   border: none;
   border-radius: 2rem;
-  padding: 0.5rem 1rem;
-  font-size: 0.9rem;
+  padding: 0.6rem 1.2rem;
+  font-size: 0.95rem;
+  font-weight: ${props => props.active ? '600' : '500'};
   cursor: pointer;
   box-shadow: ${props => props.active ? 'var(--box-shadow-sm)' : 'none'};
   transition: all 0.3s ease;
@@ -85,7 +89,7 @@ const ViewButton = styled.button`
 `;
 
 const ProgressContent = styled.div`
-  margin-top: 1.5rem;
+  margin-top: 2rem;
 `;
 
 const WeeklyProgress = styled.div`
@@ -285,32 +289,16 @@ const CategoryStats = styled.div`
 
 const CategoryCard = styled.div`
   background-color: white;
-  border-radius: var(--border-radius);
   padding: 1.5rem;
-  box-shadow: var(--box-shadow-sm);
-  position: relative;
-  overflow: hidden;
+  border-radius: var(--border-radius-lg);
+  margin-bottom: 1rem;
+  box-shadow: var(--shadow-2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-left: 5px solid ${props => getCategoryColor(props.category)};
   
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 5px;
-    height: 100%;
-    background-color: ${props => {
-      switch(props.category) {
-        case 'personal_growth': return 'var(--indigo)';
-        case 'emotional_health': return 'var(--pink)';
-        case 'mental_fitness': return 'var(--emerald)';
-        case 'physical_health': return 'var(--red)';
-        case 'relationships': return 'var(--amber)';
-        case 'social': return 'var(--blue)';
-        case 'financial': return 'var(--purple)';
-        case 'mindfulness': return 'var(--violet)';
-        default: return 'var(--gray-400)';
-      }
-    }};
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-3);
   }
   
   @media (prefers-color-scheme: dark) {
@@ -321,40 +309,23 @@ const CategoryCard = styled.div`
 const CategoryTitle = styled.h3`
   display: flex;
   align-items: center;
-  font-size: 1rem;
+  margin: 0 0 1rem 0;
+  font-size: 1.25rem;
   font-weight: 600;
-  margin: 0 0 1rem;
-  color: var(--gray-900);
+  color: ${props => getCategoryColor(props.category)};
   
   svg {
-    margin-right: 0.5rem;
-    color: ${props => {
-      switch(props.category) {
-        case 'personal_growth': return 'var(--indigo)';
-        case 'emotional_health': return 'var(--pink)';
-        case 'mental_fitness': return 'var(--emerald)';
-        case 'physical_health': return 'var(--red)';
-        case 'relationships': return 'var(--amber)';
-        case 'social': return 'var(--blue)';
-        case 'financial': return 'var(--purple)';
-        case 'mindfulness': return 'var(--violet)';
-        default: return 'var(--gray-400)';
-      }
-    }};
-  }
-  
-  @media (prefers-color-scheme: dark) {
-    color: var(--gray-100);
+    margin-right: 0.75rem;
+    font-size: 1.4rem;
   }
 `;
 
 const CategoryProgress = styled.div`
-  width: 100%;
-  height: 6px;
-  background-color: var(--gray-200);
-  border-radius: 3px;
+  height: 10px;
+  background-color: var(--gray-100);
+  border-radius: 5px;
+  margin-bottom: 1rem;
   overflow: hidden;
-  margin-bottom: 0.5rem;
   
   @media (prefers-color-scheme: dark) {
     background-color: var(--gray-700);
@@ -364,19 +335,8 @@ const CategoryProgress = styled.div`
 const CategoryProgressFill = styled.div`
   height: 100%;
   width: ${props => props.percent}%;
-  background-color: ${props => {
-    switch(props.category) {
-      case 'personal_growth': return 'var(--indigo)';
-      case 'emotional_health': return 'var(--pink)';
-      case 'mental_fitness': return 'var(--emerald)';
-      case 'physical_health': return 'var(--red)';
-      case 'relationships': return 'var(--amber)';
-      case 'social': return 'var(--blue)';
-      case 'financial': return 'var(--purple)';
-      case 'mindfulness': return 'var(--violet)';
-      default: return 'var(--primary)';
-    }
-  }};
+  background-color: ${props => getCategoryColor(props.category)};
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
 `;
 
 const CategoryStats2 = styled.div`
@@ -390,6 +350,74 @@ const CategoryStats2 = styled.div`
   }
 `;
 
+// Add skeleton loading state for the Progress component
+const SkeletonProgressContainer = styled.div`
+  width: 100%;
+  margin-bottom: 1rem;
+`;
+
+const SkeletonBar = styled.div`
+  height: ${props => props.height || '20px'};
+  width: ${props => props.width || '100%'};
+  margin-bottom: ${props => props.mb || '0.75rem'};
+  border-radius: var(--border-radius-sm);
+  background-color: var(--gray-200);
+  overflow: hidden;
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+      transparent 25%, 
+      var(--gray-100) 50%, 
+      transparent 75%
+    );
+    animation: shimmer 1.5s infinite;
+    background-size: 200% 100%;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  .dark-mode & {
+    background-color: var(--gray-700);
+
+    &::after {
+      background: linear-gradient(90deg, 
+        transparent 25%, 
+        var(--gray-600) 50%, 
+        transparent 75%
+      );
+    }
+  }
+`;
+
+// Helper function to get category color
+const getCategoryColor = (category) => {
+  switch(category) {
+    case 'personal_growth': return 'var(--indigo)';
+    case 'emotional_health': return 'var(--pink)';
+    case 'mental_fitness': return 'var(--purple)';
+    case 'physical_health': return 'var(--emerald)';
+    case 'relationships': return 'var(--blue)';
+    case 'social': return 'var(--secondary)';
+    case 'financial': return 'var(--amber)';
+    case 'mindfulness': return 'var(--primary)';
+    default: return 'var(--primary)';
+  }
+};
+
 const Progress = () => {
   const { 
     weekPlan, 
@@ -400,6 +428,16 @@ const Progress = () => {
   } = useAppContext();
   
   const [view, setView] = useState('week');
+  const [loading, setLoading] = useState(true);
+  
+  // Simulate loading data
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 800);
+    
+    return () => clearTimeout(timer);
+  }, []);
   
   // Calculate current week (1, 2, or 3)
   const currentWeek = Math.ceil(currentDay / 7);
@@ -566,156 +604,170 @@ const Progress = () => {
         </ViewSelector>
       </ProgressHeader>
       
-      {view === 'week' && (
+      {loading ? (
         <ProgressContent>
-          <WeeklyProgress>
-            <WeekCard active={currentWeek === 1}>
-              <WeekTitle active={currentWeek === 1}>
-                <FaCalendarAlt /> Week 1: Foundation
-              </WeekTitle>
-              <WeekProgress active={currentWeek === 1}>
-                <WeekProgressFill percent={week1Completion} />
-              </WeekProgress>
-              <WeekStats>
-                <Stat>
-                  <StatValue>{week1Completion}%</StatValue>
-                  <StatLabel>Completed</StatLabel>
-                </Stat>
-                <Stat>
-                  <StatValue>Days 1-7</StatValue>
-                  <StatLabel>Range</StatLabel>
-                </Stat>
-                <Stat>
-                  <StatValue>{week1Completion === 100 ? 'Yes' : 'No'}</StatValue>
-                  <StatLabel>Finished</StatLabel>
-                </Stat>
-              </WeekStats>
-              {week1Completion === 100 && (
-                <Badge completed><FaCheck /></Badge>
+          <SkeletonProgressContainer>
+            <SkeletonBar height="24px" width="40%" mb="1.5rem" />
+            <SkeletonBar height="80px" mb="1.5rem" />
+            <SkeletonBar height="80px" mb="1.5rem" />
+            <SkeletonBar height="80px" mb="1.5rem" />
+            <SkeletonBar height="40px" />
+          </SkeletonProgressContainer>
+        </ProgressContent>
+      ) : (
+        <>
+          {view === 'week' && (
+            <ProgressContent>
+              <WeeklyProgress>
+                <WeekCard active={currentWeek === 1}>
+                  <WeekTitle active={currentWeek === 1}>
+                    <FaCalendarAlt /> Week 1: Foundation
+                  </WeekTitle>
+                  <WeekProgress active={currentWeek === 1}>
+                    <WeekProgressFill percent={week1Completion} />
+                  </WeekProgress>
+                  <WeekStats>
+                    <Stat>
+                      <StatValue>{week1Completion}%</StatValue>
+                      <StatLabel>Completed</StatLabel>
+                    </Stat>
+                    <Stat>
+                      <StatValue>Days 1-7</StatValue>
+                      <StatLabel>Range</StatLabel>
+                    </Stat>
+                    <Stat>
+                      <StatValue>{week1Completion === 100 ? 'Yes' : 'No'}</StatValue>
+                      <StatLabel>Finished</StatLabel>
+                    </Stat>
+                  </WeekStats>
+                  {week1Completion === 100 && (
+                    <Badge completed><FaCheck /></Badge>
+                  )}
+                </WeekCard>
+                
+                <WeekCard active={currentWeek === 2}>
+                  <WeekTitle active={currentWeek === 2}>
+                    <FaCalendarAlt /> Week 2: Expansion
+                  </WeekTitle>
+                  <WeekProgress active={currentWeek === 2}>
+                    <WeekProgressFill percent={week2Completion} />
+                  </WeekProgress>
+                  <WeekStats>
+                    <Stat>
+                      <StatValue>{week2Completion}%</StatValue>
+                      <StatLabel>Completed</StatLabel>
+                    </Stat>
+                    <Stat>
+                      <StatValue>Days 8-14</StatValue>
+                      <StatLabel>Range</StatLabel>
+                    </Stat>
+                    <Stat>
+                      <StatValue>{week2Completion === 100 ? 'Yes' : 'No'}</StatValue>
+                      <StatLabel>Finished</StatLabel>
+                    </Stat>
+                  </WeekStats>
+                  {week2Completion === 100 && (
+                    <Badge completed><FaCheck /></Badge>
+                  )}
+                </WeekCard>
+                
+                <WeekCard active={currentWeek === 3}>
+                  <WeekTitle active={currentWeek === 3}>
+                    <FaCalendarAlt /> Week 3: Mastery
+                  </WeekTitle>
+                  <WeekProgress active={currentWeek === 3}>
+                    <WeekProgressFill percent={week3Completion} />
+                  </WeekProgress>
+                  <WeekStats>
+                    <Stat>
+                      <StatValue>{week3Completion}%</StatValue>
+                      <StatLabel>Completed</StatLabel>
+                    </Stat>
+                    <Stat>
+                      <StatValue>Days 15-21</StatValue>
+                      <StatLabel>Range</StatLabel>
+                    </Stat>
+                    <Stat>
+                      <StatValue>{week3Completion === 100 ? 'Yes' : 'No'}</StatValue>
+                      <StatLabel>Finished</StatLabel>
+                    </Stat>
+                  </WeekStats>
+                  {week3Completion === 100 && (
+                    <Badge completed><FaCheck /></Badge>
+                  )}
+                </WeekCard>
+              </WeeklyProgress>
+              
+              {/* Show current day milestone if available */}
+              {currentMilestone && (
+                <Milestone>
+                  <MilestoneIcon completed={currentMilestone.isCompleted}>
+                    {currentMilestone.icon}
+                  </MilestoneIcon>
+                  <MilestoneContent>
+                    <MilestoneTitle>{currentMilestone.title}</MilestoneTitle>
+                    <MilestoneDescription>{currentMilestone.description}</MilestoneDescription>
+                  </MilestoneContent>
+                  <MilestoneStatus completed={currentMilestone.isCompleted}>
+                    {currentMilestone.isCompleted ? <><FaCheckCircle /> Achieved</> : 'In Progress'}
+                  </MilestoneStatus>
+                </Milestone>
               )}
-            </WeekCard>
-            
-            <WeekCard active={currentWeek === 2}>
-              <WeekTitle active={currentWeek === 2}>
-                <FaCalendarAlt /> Week 2: Expansion
-              </WeekTitle>
-              <WeekProgress active={currentWeek === 2}>
-                <WeekProgressFill percent={week2Completion} />
-              </WeekProgress>
-              <WeekStats>
-                <Stat>
-                  <StatValue>{week2Completion}%</StatValue>
-                  <StatLabel>Completed</StatLabel>
-                </Stat>
-                <Stat>
-                  <StatValue>Days 8-14</StatValue>
-                  <StatLabel>Range</StatLabel>
-                </Stat>
-                <Stat>
-                  <StatValue>{week2Completion === 100 ? 'Yes' : 'No'}</StatValue>
-                  <StatLabel>Finished</StatLabel>
-                </Stat>
-              </WeekStats>
-              {week2Completion === 100 && (
-                <Badge completed><FaCheck /></Badge>
-              )}
-            </WeekCard>
-            
-            <WeekCard active={currentWeek === 3}>
-              <WeekTitle active={currentWeek === 3}>
-                <FaCalendarAlt /> Week 3: Mastery
-              </WeekTitle>
-              <WeekProgress active={currentWeek === 3}>
-                <WeekProgressFill percent={week3Completion} />
-              </WeekProgress>
-              <WeekStats>
-                <Stat>
-                  <StatValue>{week3Completion}%</StatValue>
-                  <StatLabel>Completed</StatLabel>
-                </Stat>
-                <Stat>
-                  <StatValue>Days 15-21</StatValue>
-                  <StatLabel>Range</StatLabel>
-                </Stat>
-                <Stat>
-                  <StatValue>{week3Completion === 100 ? 'Yes' : 'No'}</StatValue>
-                  <StatLabel>Finished</StatLabel>
-                </Stat>
-              </WeekStats>
-              {week3Completion === 100 && (
-                <Badge completed><FaCheck /></Badge>
-              )}
-            </WeekCard>
-          </WeeklyProgress>
-          
-          {/* Show current day milestone if available */}
-          {currentMilestone && (
-            <Milestone>
-              <MilestoneIcon completed={currentMilestone.isCompleted}>
-                {currentMilestone.icon}
-              </MilestoneIcon>
-              <MilestoneContent>
-                <MilestoneTitle>{currentMilestone.title}</MilestoneTitle>
-                <MilestoneDescription>{currentMilestone.description}</MilestoneDescription>
-              </MilestoneContent>
-              <MilestoneStatus completed={currentMilestone.isCompleted}>
-                {currentMilestone.isCompleted ? <><FaCheckCircle /> Achieved</> : 'In Progress'}
-              </MilestoneStatus>
-            </Milestone>
+              
+              {/* Overall progress bar */}
+              <ProgressContainer>
+                <ProgressTitle>Total Progress: {totalCompletion}%</ProgressTitle>
+                <WeekProgress>
+                  <WeekProgressFill percent={totalCompletion} />
+                </WeekProgress>
+              </ProgressContainer>
+            </ProgressContent>
           )}
           
-          {/* Overall progress bar */}
-          <ProgressContainer>
-            <ProgressTitle>Total Progress: {totalCompletion}%</ProgressTitle>
-            <WeekProgress>
-              <WeekProgressFill percent={totalCompletion} />
-            </WeekProgress>
-          </ProgressContainer>
-        </ProgressContent>
-      )}
-      
-      {view === 'category' && (
-        <ProgressContent>
-          <CategoryStats>
-            {Object.values(taskCategories).map(category => (
-              <CategoryCard key={category} category={category}>
-                <CategoryTitle category={category}>
-                  {getCategoryIcon(category)}
-                  {category.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                </CategoryTitle>
-                <CategoryProgress>
-                  <CategoryProgressFill 
-                    percent={calculateCategoryCompletion(category)} 
-                    category={category} 
-                  />
-                </CategoryProgress>
-                <CategoryStats2>
-                  <div>{calculateCategoryCompletion(category)}% Complete</div>
-                  <div>Points: {categoryScores[category] || 0}</div>
-                </CategoryStats2>
-              </CategoryCard>
-            ))}
-          </CategoryStats>
-        </ProgressContent>
-      )}
-      
-      {view === 'milestone' && (
-        <ProgressContent>
-          {milestones.map(milestone => (
-            <Milestone key={milestone.id}>
-              <MilestoneIcon completed={milestone.isCompleted}>
-                {milestone.icon}
-              </MilestoneIcon>
-              <MilestoneContent>
-                <MilestoneTitle>{milestone.title}</MilestoneTitle>
-                <MilestoneDescription>{milestone.description}</MilestoneDescription>
-              </MilestoneContent>
-              <MilestoneStatus completed={milestone.isCompleted}>
-                {milestone.isCompleted ? <><FaCheckCircle /> Achieved</> : 'In Progress'}
-              </MilestoneStatus>
-            </Milestone>
-          ))}
-        </ProgressContent>
+          {view === 'category' && (
+            <ProgressContent>
+              <CategoryStats>
+                {Object.values(taskCategories).map(category => (
+                  <CategoryCard key={category} category={category}>
+                    <CategoryTitle category={category}>
+                      {getCategoryIcon(category)}
+                      {category.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                    </CategoryTitle>
+                    <CategoryProgress>
+                      <CategoryProgressFill 
+                        percent={calculateCategoryCompletion(category)} 
+                        category={category} 
+                      />
+                    </CategoryProgress>
+                    <CategoryStats2>
+                      <div>{calculateCategoryCompletion(category)}% Complete</div>
+                      <div>Points: {categoryScores[category] || 0}</div>
+                    </CategoryStats2>
+                  </CategoryCard>
+                ))}
+              </CategoryStats>
+            </ProgressContent>
+          )}
+          
+          {view === 'milestone' && (
+            <ProgressContent>
+              {milestones.map(milestone => (
+                <Milestone key={milestone.id}>
+                  <MilestoneIcon completed={milestone.isCompleted}>
+                    {milestone.icon}
+                  </MilestoneIcon>
+                  <MilestoneContent>
+                    <MilestoneTitle>{milestone.title}</MilestoneTitle>
+                    <MilestoneDescription>{milestone.description}</MilestoneDescription>
+                  </MilestoneContent>
+                  <MilestoneStatus completed={milestone.isCompleted}>
+                    {milestone.isCompleted ? <><FaCheckCircle /> Achieved</> : 'In Progress'}
+                  </MilestoneStatus>
+                </Milestone>
+              ))}
+            </ProgressContent>
+          )}
+        </>
       )}
     </ProgressContainer>
   );

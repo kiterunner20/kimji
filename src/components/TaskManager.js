@@ -25,7 +25,8 @@ import {
   FaRegStickyNote,
   FaLink,
   FaStar,
-  FaSmile
+  FaSmile,
+  FaInfoCircle
 } from 'react-icons/fa';
 import { useAppContext } from '../context/AppContext';
 import CategoryTaskList from './CategoryTaskList';
@@ -33,19 +34,32 @@ import CategoryTaskList from './CategoryTaskList';
 const TaskManagerContainer = styled.div`
   margin-bottom: 20px;
   position: relative;
-  max-width: 800px;
+  width: 100%;
   margin: 0 auto;
+  padding: 1.5rem 2rem;
+  position: relative;
+  z-index: 1;
   
   @media (max-width: 768px) {
-    padding: 0 10px;
+    padding: 1rem;
   }
 `;
 
 const SectionTitle = styled.h2`
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 15px;
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
   color: var(--gray-900);
+  display: flex;
+  align-items: center;
+  font-family: 'Poppins', 'Montserrat', sans-serif;
+  letter-spacing: -0.5px;
+  
+  svg {
+    margin-right: 0.75rem;
+    color: var(--primary);
+    font-size: 1.5rem;
+  }
   
   .dark-mode & {
     color: var(--gray-100);
@@ -55,9 +69,28 @@ const SectionTitle = styled.h2`
 const TaskFilters = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin: 12px 0 16px;
-  padding: 8px 0;
+  gap: 12px;
+  margin: 16px 0 24px;
+  padding: 4px 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--gray-300);
+    border-radius: 3px;
+  }
+  
+  .dark-mode &::-webkit-scrollbar-thumb {
+    background-color: var(--gray-600);
+  }
+
+  @media (max-width: 768px) {
+    padding-bottom: 8px;
+  }
 `;
 
 const FilterButton = styled.button`
@@ -68,55 +101,150 @@ const FilterButton = styled.button`
   color: ${props => props.active ? 'white' : 'var(--gray-700)'};
   border: none;
   border-radius: 20px;
-  padding: 8px 16px;
-  font-size: 0.85rem;
+  padding: 10px 20px;
+  font-size: 0.95rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-shadow: ${props => props.active ? '0 4px 12px rgba(124, 58, 237, 0.2)' : 'none'};
   
   svg {
-    margin-right: 8px;
-    font-size: 0.9rem;
+    margin-right: 10px;
+    font-size: 1.1rem;
   }
   
   &:hover {
-    background-color: ${props => props.active ? 'var(--primary-dark)' : 'rgba(0,0,0,0.04)'};
+    background-color: ${props => props.active ? 'var(--primary-dark)' : 'rgba(0,0,0,0.05)'};
+    transform: translateY(-2px);
+  }
+  
+  .dark-mode & {
+    background-color: ${props => props.active ? 'var(--primary)' : 'rgba(255,255,255,0.1)'};
+    color: ${props => props.active ? 'white' : 'var(--gray-300)'};
   }
 `;
 
 const TaskList = styled.div`
-  margin-bottom: 20px;
+  margin-bottom: 30px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+  
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const TaskCard = styled.div`
-  margin-bottom: 16px;
-  border-radius: 8px;
   background-color: white;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  border-radius: var(--border-radius);
+  margin-bottom: 0;
   overflow: hidden;
-  border: 1px solid rgba(0,0,0,0.05);
+  box-shadow: var(--shadow-2);
+  transition: all 0.3s ease;
+  position: relative;
+  border-left: 5px solid ${props => 
+    props.category === 'personal_growth' ? 'var(--indigo)' :
+    props.category === 'emotional_health' ? 'var(--pink)' :
+    props.category === 'mental_fitness' ? 'var(--purple)' :
+    props.category === 'physical_health' ? 'var(--emerald)' :
+    props.category === 'relationships' ? 'var(--blue)' :
+    props.category === 'social' ? 'var(--secondary)' :
+    props.category === 'financial' ? 'var(--amber)' :
+    props.category === 'mindfulness' ? 'var(--primary)' :
+    'var(--gray-300)'
+  };
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-3);
+  }
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: ${props => {
+      const baseColor = 
+        props.category === 'personal_growth' ? 'rgba(99, 102, 241, 0.08)' :
+        props.category === 'emotional_health' ? 'rgba(236, 72, 153, 0.08)' :
+        props.category === 'mental_fitness' ? 'rgba(139, 92, 246, 0.08)' :
+        props.category === 'physical_health' ? 'rgba(16, 185, 129, 0.08)' :
+        props.category === 'relationships' ? 'rgba(59, 130, 246, 0.08)' :
+        props.category === 'social' ? 'rgba(14, 165, 233, 0.08)' :
+        props.category === 'financial' ? 'rgba(245, 158, 11, 0.08)' :
+        props.category === 'mindfulness' ? 'rgba(124, 58, 237, 0.08)' :
+        'rgba(107, 114, 128, 0.08)';
+      return `linear-gradient(to bottom, ${baseColor}, transparent)`;
+    }};
+    pointer-events: none;
+    z-index: 0;
+  }
   
   .dark-mode & {
     background-color: var(--gray-800);
-    border-color: var(--gray-700);
+    border-left-color: ${props => 
+      props.category === 'personal_growth' ? 'var(--indigo)' :
+      props.category === 'emotional_health' ? 'var(--pink)' :
+      props.category === 'mental_fitness' ? 'var(--purple)' :
+      props.category === 'physical_health' ? 'var(--emerald)' :
+      props.category === 'relationships' ? 'var(--blue)' :
+      props.category === 'social' ? 'var(--secondary)' :
+      props.category === 'financial' ? 'var(--amber)' :
+      props.category === 'mindfulness' ? 'var(--primary)' :
+      'var(--gray-600)'
+    };
+    
+    &::before {
+      background: ${props => {
+        const baseColor = 
+          props.category === 'personal_growth' ? 'rgba(99, 102, 241, 0.12)' :
+          props.category === 'emotional_health' ? 'rgba(236, 72, 153, 0.12)' :
+          props.category === 'mental_fitness' ? 'rgba(139, 92, 246, 0.12)' :
+          props.category === 'physical_health' ? 'rgba(16, 185, 129, 0.12)' :
+          props.category === 'relationships' ? 'rgba(59, 130, 246, 0.12)' :
+          props.category === 'social' ? 'rgba(14, 165, 233, 0.12)' :
+          props.category === 'financial' ? 'rgba(245, 158, 11, 0.12)' :
+          props.category === 'mindfulness' ? 'rgba(124, 58, 237, 0.12)' :
+          'rgba(107, 114, 128, 0.12)';
+        return `linear-gradient(to bottom, ${baseColor}, transparent)`;
+      }};
+    }
   }
 `;
 
 const TaskContent = styled.div`
-  padding: 16px;
+  padding: 20px;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  
+  .task-header {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: ${props => props.hasDescription ? '12px' : '8px'};
+  }
 `;
 
 const TaskTitle = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  font-weight: 500;
+  font-weight: 600;
   flex: 1;
   color: ${props => props.completed ? 'var(--gray-500)' : 'var(--gray-900)'};
   
   h4 {
     margin: 0;
-    font-size: 0.9rem;
+    font-size: 1.05rem;
     text-decoration: ${props => props.completed ? 'line-through' : 'none'};
     color: ${props => props.completed ? 'var(--gray-500)' : 'var(--gray-900)'};
     word-break: break-word;
@@ -133,10 +261,12 @@ const TaskTitle = styled.div`
 `;
 
 const TaskDescription = styled.div`
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   color: ${props => props.completed ? 'var(--gray-500)' : 'var(--gray-700)'};
   margin-top: ${props => props.completed ? 0 : '4px'};
-  line-height: 1.4;
+  line-height: 1.5;
+  margin-bottom: 16px;
+  flex-grow: 1;
   
   .dark-mode & {
     color: ${props => props.completed ? 'var(--gray-600)' : 'var(--gray-400)'};
@@ -144,29 +274,73 @@ const TaskDescription = styled.div`
 `;
 
 const TaskCheckbox = styled.div`
-  width: 20px;
-  height: 20px;
-  min-width: 20px;
-  min-height: 20px;
-  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  min-width: 26px;
+  border-radius: 13px;
   border: 2px solid ${props => props.completed ? 'var(--success)' : 'var(--gray-400)'};
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-right: 15px;
   cursor: pointer;
-  background-color: ${props => props.completed ? 'var(--success)' : 'white'};
+  background-color: ${props => props.completed ? 'var(--success)' : 'transparent'};
   color: white;
-  margin-right: 8px;
   transition: all 0.2s ease;
+  margin-top: 2px;
+  
+  &:hover {
+    transform: scale(1.1);
+    background-color: ${props => props.completed ? 'var(--success)' : 'var(--gray-100)'};
+  }
   
   svg {
-    transform: scale(${props => props.completed ? 1 : 0});
-    transition: transform 0.2s ease;
+    font-size: 14px;
   }
   
   .dark-mode & {
     border-color: ${props => props.completed ? 'var(--success)' : 'var(--gray-500)'};
-    background-color: ${props => props.completed ? 'var(--success)' : 'var(--gray-700)'};
+    
+    &:hover {
+      background-color: ${props => props.completed ? 'var(--success)' : 'var(--gray-700)'};
+    }
+  }
+`;
+
+const TaskProgress = styled.div`
+  margin-top: auto;
+  padding-top: 12px;
+`;
+
+const ProgressBar = styled.div`
+  width: 100%;
+  height: 4px;
+  background-color: var(--gray-200);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 8px;
+  
+  .dark-mode & {
+    background-color: var(--gray-700);
+  }
+`;
+
+const ProgressFill = styled.div`
+  height: 100%;
+  width: ${props => props.completed ? '100%' : '0%'};
+  background-color: var(--success);
+  transition: width 0.3s ease;
+`;
+
+const TaskStats = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--gray-600);
+  
+  .dark-mode & {
+    color: var(--gray-400);
   }
 `;
 
@@ -444,35 +618,69 @@ const AddTaskButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  padding: 15px;
-  border: 1px dashed #ccc;
+  background-color: var(--primary);
+  color: white;
+  border: none;
   border-radius: 12px;
-  background-color: transparent;
-  color: var(--primary);
-  font-size: 16px;
-  font-weight: 500;
+  padding: 14px 24px;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-  margin-top: 16px;
-  
-  svg {
-    margin-right: 8px;
-  }
+  transition: all 0.3s ease;
+  margin: 20px auto 10px;
+  box-shadow: 0 6px 15px rgba(124, 58, 237, 0.2);
   
   &:hover {
-    background-color: rgba(99, 102, 241, 0.05);
-    border-color: var(--primary);
+    background-color: var(--primary-dark);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(124, 58, 237, 0.25);
+  }
+  
+  svg {
+    margin-right: 10px;
+    font-size: 1.1rem;
   }
   
   .dark-mode & {
-    color: var(--primary-light);
-    border-color: #555;
+    box-shadow: 0 6px 15px rgba(124, 58, 237, 0.3);
     
     &:hover {
-      background-color: rgba(99, 102, 241, 0.1);
-      border-color: var(--primary-light);
+      box-shadow: 0 8px 20px rgba(124, 58, 237, 0.4);
     }
+  }
+`;
+
+const NoTasksMessage = styled.div`
+  padding: 2rem;
+  text-align: center;
+  margin: 1.5rem 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  color: var(--gray-600);
+  font-size: 1rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  
+  svg {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: var(--primary);
+    opacity: 0.7;
+  }
+  
+  p {
+    font-weight: 500;
+    margin: 0;
+    line-height: 1.5;
+  }
+  
+  .dark-mode & {
+    background-color: rgba(30, 41, 59, 0.8);
+    color: var(--gray-300);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
   }
 `;
 
@@ -1031,6 +1239,8 @@ const TaskManager = () => {
     try {
       return (
         <div>
+          <SectionTitle>Today's Tasks</SectionTitle>
+          
           <TaskFilters>
             <FilterButton
               active={selectedCategory === 'all'}
@@ -1068,43 +1278,50 @@ const TaskManager = () => {
             <CategoryTaskList selectedDay={selectedDay} />
           ) : (
             <div className="filtered-tasks">
-              {tasksByCategory[selectedCategory] && tasksByCategory[selectedCategory].map(task => (
-                <TaskCard
-                  key={task.id}
-                  completed={task.completed}
-                  onClick={() => toggleTaskDetails(task.id)}
-                >
-                  <TaskContent>
-                    <div className="task-header">
-                      <TaskCheckbox
-                        completed={task.completed}
-                        onClick={(e) => handleCheckboxClick(e, task.id, task.completed)}
-                      >
-                        {task.completed && <FaCheck />}
-                      </TaskCheckbox>
-                      <TaskTitle completed={task.completed}>
-                        <h4>{task.title}</h4>
-                      </TaskTitle>
-                    </div>
-                    {task.description && (
-                      <TaskDescription completed={task.completed}>
-                        {task.description}
-                      </TaskDescription>
-                    )}
-                  </TaskContent>
-                </TaskCard>
-              ))}
+              <TaskList>
+                {tasksByCategory[selectedCategory] && tasksByCategory[selectedCategory].map(task => (
+                  <TaskCard
+                    key={task.id}
+                    completed={task.completed}
+                    category={task.taskCategory}
+                    onClick={() => toggleTaskDetails(task.id)}
+                  >
+                    <TaskContent hasDescription={task.description}>
+                      <div className="task-header">
+                        <TaskCheckbox
+                          completed={task.completed}
+                          onClick={(e) => handleCheckboxClick(e, task.id, task.completed)}
+                        >
+                          {task.completed && <FaCheck />}
+                        </TaskCheckbox>
+                        <TaskTitle completed={task.completed}>
+                          <h4>{task.title}</h4>
+                        </TaskTitle>
+                      </div>
+                      {task.description && (
+                        <TaskDescription completed={task.completed}>
+                          {task.description}
+                        </TaskDescription>
+                      )}
+                      
+                      <TaskProgress>
+                        <ProgressBar>
+                          <ProgressFill completed={task.completed} />
+                        </ProgressBar>
+                        <TaskStats>
+                          <span>{task.points || 10} points</span>
+                          <span>{task.completed ? 'Completed' : 'Pending'}</span>
+                        </TaskStats>
+                      </TaskProgress>
+                    </TaskContent>
+                  </TaskCard>
+                ))}
+              </TaskList>
               {(!tasksByCategory[selectedCategory] || tasksByCategory[selectedCategory].length === 0) && (
-                <div style={{
-                  padding: '20px',
-                  textAlign: 'center',
-                  color: 'var(--gray-500)',
-                  backgroundColor: 'var(--gray-50)',
-                  borderRadius: '8px',
-                  marginTop: '16px'
-                }}>
-                  No tasks found in this category
-                </div>
+                <NoTasksMessage>
+                  <FaInfoCircle />
+                  <p>No tasks found in this category</p>
+                </NoTasksMessage>
               )}
             </div>
           )}
@@ -1136,8 +1353,6 @@ const TaskManager = () => {
 
   return (
     <TaskManagerContainer>
-      <SectionTitle>Kimji Transform Challenge</SectionTitle>
-      
       {/* Main content */}
       {renderCategoryTaskList()}
       

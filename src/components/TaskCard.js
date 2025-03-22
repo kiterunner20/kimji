@@ -32,7 +32,7 @@ const Card = styled.div`
   background-color: var(--light);
   border-radius: var(--border-radius-lg);
   box-shadow: 0 10px 25px rgba(0,0,0,0.05), 0 5px 10px rgba(0,0,0,0.03);
-  margin-bottom: 1.75rem;
+  margin-bottom: 2.25rem; /* Increased spacing between cards */
   overflow: hidden;
   transition: all 400ms cubic-bezier(0.2, 0.8, 0.2, 1);
   border: 1px solid rgba(0,0,0,0.03);
@@ -56,7 +56,7 @@ const Card = styled.div`
     `translateY(-10px) rotateX(${props.rotateX}deg) rotateY(${props.rotateY}deg)` : 
     'translateY(0) rotateX(0) rotateY(0)'};
   backface-visibility: hidden;
-  min-height: ${props => props.isExpanded ? '340px' : '120px'};
+  min-height: ${props => props.isExpanded ? '400px' : '160px'}; /* Increased minimum height */
   max-width: 100%;
   width: 100%;
   
@@ -64,8 +64,17 @@ const Card = styled.div`
     box-shadow: 0 15px 35px rgba(0,0,0,0.08), 0 8px 15px rgba(0,0,0,0.05);
   }
   
+  /* Enhanced distinction for primary vs secondary tasks */
+  opacity: ${props => props.isPrimary ? 1 : 0.95};
+  transform: ${props => {
+    if (props.isHovered) {
+      return `translateY(-10px) rotateX(${props.rotateX}deg) rotateY(${props.rotateY}deg)`;
+    }
+    return props.isPrimary ? 'translateY(0)' : 'translateY(0) scale(0.98)';
+  }};
+  
   .dark-mode & {
-    background-color: ${props => props.completed ? 'rgba(31, 41, 55, 0.8)' : 'rgba(17, 24, 39, 0.9)'};
+    background-color: ${props => props.completed ? 'rgba(31, 41, 55, 0.8)' : props.isPrimary ? 'rgba(17, 24, 39, 0.9)' : 'rgba(17, 24, 39, 0.85)'};
     border-color: rgba(255,255,255,0.05);
     box-shadow: 0 10px 25px rgba(0,0,0,0.2), 0 5px 10px rgba(0,0,0,0.15);
   }
@@ -77,16 +86,31 @@ const Card = styled.div`
     left: 0;
     right: 0;
     bottom: 0;
-    background: ${props => props.type === 'meditation' ? 
-      'radial-gradient(circle at 10% 10%, rgba(187, 134, 252, 0.05), transparent 50%)' :
-      props.type === 'hydration' ? 
-      'radial-gradient(circle at 10% 10%, rgba(72, 202, 228, 0.05), transparent 50%)' :
-      props.type === 'workout' ? 
-      'radial-gradient(circle at 10% 10%, rgba(251, 133, 0, 0.05), transparent 50%)' :
-      'radial-gradient(circle at 10% 10%, rgba(124, 58, 237, 0.05), transparent 50%)'
-    };
+    background: ${props => {
+      // Enhanced color coding with subtle gradient backgrounds based on task type
+      switch (props.type) {
+        case 'meditation': 
+          return 'radial-gradient(circle at 10% 10%, rgba(14, 165, 233, 0.1), transparent 60%)';
+        case 'hydration': 
+          return 'radial-gradient(circle at 10% 10%, rgba(72, 202, 228, 0.1), transparent 60%)';
+        case 'workout': 
+          return 'radial-gradient(circle at 10% 10%, rgba(251, 133, 0, 0.1), transparent 60%)';
+        case 'emotion': 
+          return 'radial-gradient(circle at 10% 10%, rgba(157, 78, 221, 0.1), transparent 60%)';
+        case 'gratitude': 
+          return 'radial-gradient(circle at 10% 10%, rgba(74, 222, 128, 0.1), transparent 60%)';
+        case 'expense': 
+          return 'radial-gradient(circle at 10% 10%, rgba(245, 158, 11, 0.1), transparent 60%)';
+        case 'kindness': 
+          return 'radial-gradient(circle at 10% 10%, rgba(236, 72, 153, 0.1), transparent 60%)';
+        case 'custom': 
+          return 'radial-gradient(circle at 10% 10%, rgba(99, 102, 241, 0.1), transparent 60%)';
+        default: 
+          return 'radial-gradient(circle at 10% 10%, rgba(124, 58, 237, 0.1), transparent 60%)';
+      }
+    }};
     border-radius: var(--border-radius-lg);
-    opacity: ${props => props.isHovered ? 1 : 0};
+    opacity: 1; /* Always show the subtle background */
     transition: opacity 400ms cubic-bezier(0.2, 0.8, 0.2, 1);
     pointer-events: none;
     z-index: 0;
@@ -96,7 +120,7 @@ const Card = styled.div`
 // Header with smoother animations
 const CardHeader = styled.div`
   display: flex;
-  padding: 1.5rem 1.75rem;
+  padding: 2rem 2.5rem; /* Increased padding for better readability */
   align-items: center;
   cursor: pointer;
   position: relative;
@@ -106,8 +130,8 @@ const CardHeader = styled.div`
     content: '';
     position: absolute;
     bottom: 0;
-    left: 5%;
-    right: 5%;
+    left: 8%;
+    right: 8%;
     height: 1px;
     background: linear-gradient(to right, 
       transparent, 
@@ -129,8 +153,8 @@ const CardHeader = styled.div`
 
 // Enhanced interactive checkbox with pulse animation
 const CheckBox = styled.div`
-  width: 28px;
-  height: 28px;
+  width: 36px; /* Larger checkboxes */
+  height: 36px;
   border-radius: 50%;
   border: 2px solid ${props => props.completed ? 'var(--success)' : 'var(--gray-300)'};
   background-color: ${props => props.completed ? 'var(--success)' : 'transparent'};
@@ -138,22 +162,22 @@ const CheckBox = styled.div`
   align-items: center;
   justify-content: center;
   color: white;
-  margin-right: 1.25rem;
+  margin-right: 2rem; /* More spacing */
   cursor: pointer;
   transition: all 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
   position: relative;
   z-index: 10;
   
   ${props => props.completed && `
-    box-shadow: 0 0 0 5px var(--success-light);
+    box-shadow: 0 0 0 6px var(--success-light);
   `}
 
   &:hover {
-    transform: scale(1.1);
+    transform: scale(1.15);
     border-color: ${props => props.completed ? 'var(--success)' : 'var(--primary)'};
     box-shadow: ${props => props.completed ? 
-      '0 0 0 5px var(--success-light)' : 
-      '0 0 0 3px var(--primary-light)'};
+      '0 0 0 6px var(--success-light)' : 
+      '0 0 0 4px var(--primary-light)'};
   }
   
   .dark-mode & {
@@ -164,10 +188,11 @@ const CheckBox = styled.div`
     opacity: ${props => props.completed ? 1 : 0};
     transform: ${props => props.completed ? 'scale(1)' : 'scale(0.5)'};
     transition: all 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    font-size: 1rem;
   }
   
   ${props => props.pulse && `
-    animation: pulse 1.5s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+    animation: pulse 1.8s cubic-bezier(0.24, 0, 0.38, 1) infinite;
   `}
   
   @keyframes pulse {
@@ -175,7 +200,7 @@ const CheckBox = styled.div`
       box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
     }
     70% {
-      box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+      box-shadow: 0 0 0 12px rgba(16, 185, 129, 0);
     }
     100% {
       box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
@@ -183,23 +208,24 @@ const CheckBox = styled.div`
   }
 `;
 
-// Redesigned task information container
+// Redesigned task information container with more space
 const TaskInfo = styled.div`
   flex: 1;
   min-width: 0;
-  margin-right: 1rem;
+  margin-right: 1.25rem;
 `;
 
 // Enhanced task title with better typography
 const TaskTitle = styled.h3`
-  margin: 0 0 0.35rem 0;
-  font-size: 1.1rem;
-  font-weight: 600;
+  margin: 0 0 0.75rem 0; /* More vertical spacing */
+  font-size: ${props => props.isPrimary ? '1.4rem' : '1.25rem'}; /* Larger titles */
+  font-weight: ${props => props.isPrimary ? '700' : '600'}; /* Primary tasks have bolder titles */
+  letter-spacing: -0.01em; /* Improved typography */
   color: var(--gray-900);
   transition: all 300ms ease;
   position: relative;
   padding-bottom: 0.35rem;
-  line-height: 1.3;
+  line-height: 1.4; /* Increased line height for better readability */
   text-decoration: ${props => props.completed ? 'line-through' : 'none'};
   text-decoration-color: ${props => props.completed ? 'var(--success)' : 'transparent'};
   text-decoration-thickness: 2px;
@@ -224,10 +250,10 @@ const TaskTitle = styled.h3`
 
 // Improved task description with better typography and line clamp
 const TaskDescription = styled.p`
-  margin: 0 0 0.75rem 0;
-  font-size: 0.95rem;
+  margin: 0 0 1rem 0; /* Increased bottom margin */
+  font-size: 1.05rem; /* Larger description text */
   color: var(--gray-600);
-  line-height: 1.5;
+  line-height: 1.6; /* Increased line height for better readability */
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
@@ -244,18 +270,18 @@ const TaskDescription = styled.p`
 const TaskMeta = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.75rem; /* Increased gap for better spacing */
   align-items: center;
-  margin-top: 0.35rem;
+  margin-top: 0.75rem; /* Increased top margin */
 `;
 
 // Task tags with enhanced design
 const TaskTag = styled.span`
   display: inline-flex;
   align-items: center;
-  font-size: 0.75rem;
+  font-size: 0.85rem; /* Increased size */
   font-weight: 500;
-  padding: 0.25rem 0.6rem;
+  padding: 0.35rem 0.8rem; /* Increased padding */
   border-radius: 100px;
   background-color: ${props => props.type ? `var(--${props.type}-light, rgba(124,58,237,0.1))` : 'rgba(124,58,237,0.1)'};
   color: ${props => props.type ? `var(--${props.type}, var(--primary))` : 'var(--primary)'};
@@ -291,10 +317,10 @@ const ReminderToggle = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
+  font-size: 1.2rem; /* Increased size */
   color: ${props => props.isActive ? 'var(--warning)' : 'var(--gray-400)'};
   cursor: pointer;
-  margin-right: 0.5rem;
+  margin-right: 1rem; /* Increased margin */
   border-radius: 50%;
   transition: all 300ms ease;
   
@@ -323,8 +349,8 @@ const CardExpander = styled.div`
   transform: ${props => props.isExpanded ? 'rotate(180deg)' : 'rotate(0deg)'};
   color: var(--gray-400);
   border-radius: 50%;
-  padding: 0.4rem;
-  font-size: 1.1rem;
+  padding: 0.5rem; /* Increased padding */
+  font-size: 1.2rem; /* Increased size */
   
   &:hover {
     background-color: rgba(0,0,0,0.05);
@@ -341,9 +367,48 @@ const CardExpander = styled.div`
   }
 `;
 
+// Action buttons container for edit/delete
+const ActionButtonContainer = styled.div`
+  position: absolute;
+  top: 1.5rem;
+  right: 5rem;
+  display: flex;
+  gap: 0.5rem;
+  z-index: 5;
+`;
+
+// Action button for edit/delete
+const ActionButton = styled.button`
+  background-color: ${props => props.type === 'edit' ? 'var(--primary-light)' : 'var(--error-light)'};
+  color: ${props => props.type === 'edit' ? 'var(--primary)' : 'var(--error)'};
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: ${props => props.show ? 1 : 0};
+  transform: ${props => props.show ? 'translateY(0)' : 'translateY(-10px)'};
+  pointer-events: ${props => props.show ? 'auto' : 'none'};
+  transition: all 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .dark-mode & {
+    background-color: ${props => props.type === 'edit' ? 'rgba(124, 58, 237, 0.2)' : 'rgba(239, 68, 68, 0.2)'};
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  }
+`;
+
 // Improved card content with better animation and padding
 const CardContent = styled.div`
-  padding: ${props => props.isExpanded ? '0 1.75rem 1.75rem' : '0 1.75rem'};
+  padding: ${props => props.isExpanded ? '0 2.5rem 2.5rem' : '0 2.5rem'}; /* Increased padding */
   max-height: ${props => props.isExpanded ? '1000px' : '0'};
   opacity: ${props => props.isExpanded ? 1 : 0};
   overflow: hidden;
@@ -351,43 +416,25 @@ const CardContent = styled.div`
   position: relative;
 `;
 
-// Task details with improved layout
-const TaskDetails = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-`;
-
-// Improved detail card styling
-const DetailCard = styled.div`
-  background-color: ${props => props.highlighted ? 'rgba(124,58,237,0.05)' : 'rgba(0,0,0,0.02)'};
+// Feelings input section
+const FeelingsSection = styled.div`
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background-color: rgba(0, 0, 0, 0.02);
   border-radius: var(--border-radius-md);
-  padding: 1rem;
-  transition: all 300ms ease;
-  border: 1px solid ${props => props.highlighted ? 'rgba(124,58,237,0.1)' : 'transparent'};
+  border: 1px solid rgba(0, 0, 0, 0.05);
   
   .dark-mode & {
-    background-color: ${props => props.highlighted ? 'rgba(124,58,237,0.1)' : 'rgba(255,255,255,0.03)'};
-    border-color: ${props => props.highlighted ? 'rgba(124,58,237,0.2)' : 'transparent'};
-  }
-  
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-    
-    .dark-mode & {
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.05);
   }
 `;
 
-// Improved detail title styling
-const DetailTitle = styled.div`
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--gray-500);
-  margin-bottom: 0.5rem;
+const FeelingsTitle = styled.div`
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--gray-800);
   display: flex;
   align-items: center;
   
@@ -397,14 +444,154 @@ const DetailTitle = styled.div`
   }
   
   .dark-mode & {
+    color: var(--gray-200);
+  }
+`;
+
+const FeelingsTextarea = styled.textarea`
+  width: 100%;
+  min-height: 100px;
+  padding: 1rem;
+  border-radius: var(--border-radius-md);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background-color: white;
+  font-size: 0.95rem;
+  color: var(--gray-800);
+  resize: vertical;
+  font-family: inherit;
+  transition: all 300ms ease;
+  
+  &:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-light);
+  }
+  
+  .dark-mode & {
+    background-color: rgba(17, 24, 39, 0.8);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: var(--gray-200);
+  }
+`;
+
+// Mood selector component
+const MoodSelector = styled.div`
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+  justify-content: center;
+`;
+
+const MoodButton = styled.button`
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: all 300ms ease;
+  opacity: ${props => props.selected ? 1 : 0.5};
+  transform: ${props => props.selected ? 'scale(1.2)' : 'scale(1)'};
+  
+  &:hover {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  
+  &:focus {
+    outline: none;
+  }
+`;
+
+// Save button for feelings
+const SaveButton = styled.button`
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-md);
+  padding: 0.6rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 1.5rem;
+  transition: all 300ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  svg {
+    margin-right: 0.35rem;
+  }
+  
+  &:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-2px);
+  }
+  
+  .dark-mode & {
+    opacity: 0.9;
+    
+    &:hover {
+      opacity: 1;
+    }
+  }
+`;
+
+// Task details with improved layout
+const TaskDetails = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); /* Increased column width */
+  gap: 1.5rem; /* Increased gap */
+  margin-bottom: 2rem; /* Increased margin */
+`;
+
+// Improved detail card styling
+const DetailCard = styled.div`
+  background-color: ${props => props.highlighted ? 'rgba(124,58,237,0.08)' : 'rgba(0,0,0,0.02)'};
+  border-radius: var(--border-radius-md);
+  padding: 1.25rem; /* Increased padding */
+  transition: all 300ms ease;
+  border: 1px solid ${props => props.highlighted ? 'rgba(124,58,237,0.15)' : 'transparent'};
+  
+  .dark-mode & {
+    background-color: ${props => props.highlighted ? 'rgba(124,58,237,0.15)' : 'rgba(255,255,255,0.03)'};
+    border-color: ${props => props.highlighted ? 'rgba(124,58,237,0.25)' : 'transparent'};
+  }
+  
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.05);
+    
+    .dark-mode & {
+      box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+    }
+  }
+`;
+
+// Improved detail title styling
+const DetailTitle = styled.div`
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--gray-500);
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  
+  svg {
+    margin-right: 0.5rem;
+    color: var(--primary);
+    font-size: 1rem;
+  }
+  
+  .dark-mode & {
     color: var(--gray-400);
   }
 `;
 
 // Improved detail content styling
 const DetailContent = styled.div`
-  font-size: 0.95rem;
-  font-weight: 500;
+  font-size: 1.05rem; /* Increased size */
+  font-weight: 600;
   color: var(--gray-800);
   
   .dark-mode & {
@@ -418,7 +605,7 @@ const ExpandIndicator = styled.div`
   bottom: 0;
   left: 0;
   right: 0;
-  height: 3px;
+  height: 4px; /* Increased height */
   background: linear-gradient(to right,
     ${props => {
       switch(props.type) {
@@ -438,212 +625,6 @@ const ExpandIndicator = styled.div`
   transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 `;
 
-// Task related icons
-const TaskIcon = styled.div`
-  width: 36px;
-  height: 36px;
-  border-radius: var(--border-radius-circular);
-  background-color: ${props => {
-    switch(props.type) {
-      case 'meditation': return 'rgba(14, 165, 233, 0.1)';
-      case 'hydration': return 'rgba(72, 202, 228, 0.1)';
-      case 'workout': return 'rgba(251, 133, 0, 0.1)';
-      case 'emotion': return 'rgba(157, 78, 221, 0.1)';
-      case 'gratitude': return 'rgba(74, 222, 128, 0.1)';
-      case 'expense': return 'rgba(245, 158, 11, 0.1)';
-      case 'kindness': return 'rgba(236, 72, 153, 0.1)';
-      default: return 'rgba(124, 58, 237, 0.1)';
-    }
-  }};
-  color: ${props => {
-    switch(props.type) {
-      case 'meditation': return 'var(--secondary)';
-      case 'hydration': return '#48CAE4';
-      case 'workout': return '#FB8500';
-      case 'emotion': return '#9D4EDD';
-      case 'gratitude': return '#4ADE80';
-      case 'expense': return '#F59E0B';
-      case 'kindness': return '#EC4899';
-      default: return 'var(--primary)';
-    }
-  }};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 1rem;
-  font-size: 1.1rem;
-  
-  .dark-mode & {
-    background-color: ${props => {
-      switch(props.type) {
-        case 'meditation': return 'rgba(14, 165, 233, 0.15)';
-        case 'hydration': return 'rgba(72, 202, 228, 0.15)';
-        case 'workout': return 'rgba(251, 133, 0, 0.15)';
-        case 'emotion': return 'rgba(157, 78, 221, 0.15)';
-        case 'gratitude': return 'rgba(74, 222, 128, 0.15)';
-        case 'expense': return 'rgba(245, 158, 11, 0.15)';
-        case 'kindness': return 'rgba(236, 72, 153, 0.15)';
-        default: return 'rgba(124, 58, 237, 0.15)';
-      }
-    }};
-  }
-`;
-
-// Particle effect for task completion
-const Particle = styled.div`
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: ${props => props.color};
-  opacity: 0;
-  z-index: 5;
-  pointer-events: none;
-`;
-
-// Progress bar with gradient animation
-const ProgressBar = styled.div`
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background-color: var(--gray-200);
-  overflow: hidden;
-  
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: 100%;
-    background: linear-gradient(90deg, var(--success), var(--success-light), var(--success));
-    background-size: 200% 100%;
-    animation: shimmer 2s infinite;
-    transform: translateX(-100%);
-    animation-fill-mode: forwards;
-  }
-  
-  @keyframes shimmer {
-    0% {
-      transform: translateX(-100%);
-    }
-    100% {
-      transform: translateX(0);
-    }
-  }
-`;
-
-// Calendar popover component
-const CalendarPopover = styled.div`
-  position: relative;
-  display: inline-block;
-  margin: 0.5rem 0;
-`;
-
-const CalendarTrigger = styled.div`
-  display: inline-flex;
-  align-items: center;
-  padding: 0.4rem 0.8rem;
-  border-radius: var(--border-radius-pill);
-  background-color: var(--primary-light);
-  color: var(--primary-dark);
-  font-size: 0.85rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
-  
-  svg {
-    margin-right: 0.5rem;
-  }
-  
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.2);
-  }
-`;
-
-const CalendarContent = styled.div`
-  position: absolute;
-  bottom: 100%;
-  left: 0;
-  margin-bottom: 0.5rem;
-  padding: 0.75rem;
-  background-color: var(--light);
-  border-radius: var(--border-radius-md);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.1), 0 5px 10px rgba(0,0,0,0.05);
-  min-width: 200px;
-  z-index: 20;
-  transform-origin: bottom center;
-  transition: all 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
-  opacity: ${props => props.show ? 1 : 0};
-  transform: ${props => props.show ? 'translateY(0) scale(1)' : 'translateY(10px) scale(0.95)'};
-  pointer-events: ${props => props.show ? 'auto' : 'none'};
-  
-  .dark-mode & {
-    background-color: var(--gray-800);
-    border: 1px solid rgba(255,255,255,0.1);
-  }
-  
-  &::after {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: 1rem;
-    border-width: 8px;
-    border-style: solid;
-    border-color: var(--light) transparent transparent transparent;
-    
-    .dark-mode & {
-      border-top-color: var(--gray-800);
-    }
-  }
-`;
-
-// Action buttons with animations
-const ActionButtonContainer = styled.div`
-  position: absolute;
-  bottom: 1rem;
-  right: 1rem;
-  display: flex;
-  gap: 0.5rem;
-  z-index: 10;
-`;
-
-const ActionButton = styled.button`
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background-color: ${props => 
-    props.type === 'edit' ? 'var(--primary-light)' : 
-    props.type === 'delete' ? 'var(--error-light)' : 
-    'var(--gray-200)'
-  };
-  color: ${props => 
-    props.type === 'edit' ? 'var(--primary)' : 
-    props.type === 'delete' ? 'var(--error)' : 
-    'var(--gray-700)'
-  };
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
-  transform: ${props => props.show ? 'scale(1)' : 'scale(0)'};
-  opacity: ${props => props.show ? 1 : 0};
-  
-  &:hover {
-    transform: translateY(-3px) scale(1.1);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-  }
-  
-  &:active {
-    transform: translateY(0) scale(0.95);
-  }
-`;
-
 const TaskCard = ({
   id,
   title,
@@ -660,6 +641,7 @@ const TaskCard = ({
   priority = 'medium', // Default value
   streak = 0, // Default value
   notes = '', // Default value
+  isPrimary = false,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -670,6 +652,11 @@ const TaskCard = ({
   const [pulsing, setPulsing] = useState(false);
   const [showActions, setShowActions] = useState(false);
   const [contentHeight, setContentHeight] = useState(0);
+  const [userNotes, setUserNotes] = useState(notes);
+  const [selectedMood, setSelectedMood] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(title);
+  const [editDescription, setEditDescription] = useState(description);
   const cardRef = useRef(null);
   const contentRef = useRef(null);
   const { darkMode } = useAppContext();
@@ -752,6 +739,38 @@ const TaskCard = ({
     setIsExpanded(!isExpanded);
   };
   
+  const handleSaveNotes = () => {
+    // Here you would typically call an API to save the notes
+    console.log('Saving notes for task:', id, userNotes, selectedMood);
+    // For now we'll just display a success message
+    alert('Notes saved successfully!');
+  };
+  
+  const handleEditTask = (e) => {
+    e.stopPropagation();
+    setIsEditing(true);
+    setIsExpanded(true); // Expand the card when editing
+  };
+  
+  const handleDeleteTask = (e) => {
+    e.stopPropagation();
+    if (window.confirm('Are you sure you want to delete this task?')) {
+      // Here you would typically call an API to delete the task
+      console.log('Deleting task:', id);
+      // For now we'll just display a success message
+      alert('Task deleted successfully!');
+    }
+  };
+  
+  const handleSaveEdit = () => {
+    // Here you would typically call an API to save the edited task
+    console.log('Saving edits for task:', id, editTitle, editDescription);
+    // For now we'll just update the local state
+    setIsEditing(false);
+    // Mock update for demonstration
+    alert('Task updated successfully!');
+  };
+  
   const renderTrackerComponent = () => {
     switch (type) {
       case 'hydration':
@@ -823,6 +842,53 @@ const TaskCard = ({
     }
   };
   
+  // Particle effect for task completion
+  const Particle = styled.div`
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: ${props => props.color};
+    opacity: 0;
+    z-index: 5;
+    pointer-events: none;
+    transform: translateZ(0);
+  `;
+  
+  // Progress bar for completed tasks
+  const ProgressBar = styled.div`
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background-color: var(--gray-200);
+    overflow: hidden;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      background: linear-gradient(90deg, var(--success), var(--success-light), var(--success));
+      background-size: 200% 100%;
+      animation: shimmer 2s infinite;
+      transform: translateX(-100%);
+      animation-fill-mode: forwards;
+    }
+    
+    @keyframes shimmer {
+      0% {
+        transform: translateX(-100%);
+      }
+      100% {
+        transform: translateX(0);
+      }
+    }
+  `;
+  
   return (
     <Card 
       ref={cardRef}
@@ -833,6 +899,7 @@ const TaskCard = ({
       isExpanded={isExpanded}
       rotateX={rotateX}
       rotateY={rotateY}
+      isPrimary={isPrimary}
       onMouseMove={handleMouseMove}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={handleMouseLeave}
@@ -874,7 +941,7 @@ const TaskCard = ({
         `}
       </style>
       
-      <CardHeader onClick={handleToggleExpand} isExpanded={isExpanded}>
+      <CardHeader onClick={!isEditing ? handleToggleExpand : null} isExpanded={isExpanded}>
         <CheckBox 
           completed={completed}
           pulse={pulsing}
@@ -884,210 +951,240 @@ const TaskCard = ({
         </CheckBox>
         
         <TaskInfo>
-          <TaskTitle completed={completed}>{title}</TaskTitle>
-          <TaskDescription>{description}</TaskDescription>
-          
-          <TaskMeta>
-            {category && (
-              <TaskTag type={category}>
-                {getCategoryIcon()}
-                {category.charAt(0).toUpperCase() + category.slice(1)}
-              </TaskTag>
-            )}
-            
-            {time && (
-              <ScheduleTag>
-                <FaRegClock /> {time}
-              </ScheduleTag>
-            )}
-            
-            {priority && (
-              <TaskTag 
-                style={{ 
-                  backgroundColor: `${getPriorityColor()}15`, 
-                  color: getPriorityColor()
+          {isEditing ? (
+            <div style={{ marginBottom: "1rem" }}>
+              <input 
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "0.75rem",
+                  fontSize: "1.25rem",
+                  fontWeight: "600",
+                  border: "1px solid rgba(0,0,0,0.1)",
+                  borderRadius: "var(--border-radius-md)",
+                  marginBottom: "0.75rem"
                 }}
-              >
-                Priority: {priority.charAt(0).toUpperCase() + priority.slice(1)}
-              </TaskTag>
-            )}
-          </TaskMeta>
+              />
+              <textarea
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "0.75rem",
+                  fontSize: "1rem",
+                  border: "1px solid rgba(0,0,0,0.1)",
+                  borderRadius: "var(--border-radius-md)",
+                  minHeight: "80px",
+                  resize: "vertical"
+                }}
+              />
+              <SaveButton onClick={handleSaveEdit} style={{ marginTop: "1rem" }}>
+                Save Changes
+              </SaveButton>
+            </div>
+          ) : (
+            <>
+              <TaskTitle completed={completed} isPrimary={isPrimary}>{title}</TaskTitle>
+              <TaskDescription isExpanded={isExpanded}>{description}</TaskDescription>
+              
+              <TaskMeta>
+                {category && (
+                  <TaskTag type={category}>
+                    {getCategoryIcon()}
+                    {category.charAt(0).toUpperCase() + category.slice(1)}
+                  </TaskTag>
+                )}
+                
+                {time && (
+                  <ScheduleTag>
+                    <FaRegClock /> {time}
+                  </ScheduleTag>
+                )}
+                
+                {priority && (
+                  <TaskTag 
+                    style={{ 
+                      backgroundColor: `${getPriorityColor()}15`, 
+                      color: getPriorityColor()
+                    }}
+                  >
+                    Priority: {priority.charAt(0).toUpperCase() + priority.slice(1)}
+                  </TaskTag>
+                )}
+              </TaskMeta>
+            </>
+          )}
         </TaskInfo>
         
-        <ReminderToggle 
-          isActive={hasReminder}
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleReminder(id);
-          }}
-          aria-label={hasReminder ? 'Disable reminder' : 'Enable reminder'}
-        >
-          {hasReminder ? <FaBell /> : <FaBellSlash />}
-        </ReminderToggle>
-        
-        <CardExpander isExpanded={isExpanded}>
-          <FaAngleDown />
-        </CardExpander>
+        {!isEditing && (
+          <>
+            <ReminderToggle 
+              isActive={hasReminder}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleReminder(id);
+              }}
+              aria-label={hasReminder ? 'Disable reminder' : 'Enable reminder'}
+            >
+              {hasReminder ? <FaBell /> : <FaBellSlash />}
+            </ReminderToggle>
+            
+            <CardExpander isExpanded={isExpanded}>
+              <FaAngleDown />
+            </CardExpander>
+          </>
+        )}
       </CardHeader>
       
+      {!isEditing && (
+        <ActionButtonContainer>
+          <ActionButton 
+            type="edit" 
+            show={showActions} 
+            onClick={handleEditTask}
+            aria-label="Edit task"
+          >
+            <FaPen />
+          </ActionButton>
+          <ActionButton 
+            type="delete" 
+            show={showActions} 
+            onClick={handleDeleteTask}
+            aria-label="Delete task"
+          >
+            <FaTrash />
+          </ActionButton>
+        </ActionButtonContainer>
+      )}
+      
       <CardContent ref={contentRef} isExpanded={isExpanded}>
-        {/* More detailed task information */}
-        <TaskDetails>
-          {deadline && (
-            <DetailCard highlighted>
-              <DetailTitle>
-                <FaCalendarDay /> Due Date
-              </DetailTitle>
-              <DetailContent>
-                {new Date(deadline).toLocaleDateString(undefined, {
-                  weekday: 'long',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </DetailContent>
-            </DetailCard>
-          )}
-          
-          <DetailCard>
-            <DetailTitle>
-              <FaRegClock /> Created
-            </DetailTitle>
-            <DetailContent>
-              {formatDate(createdAt)}
-            </DetailContent>
-          </DetailCard>
-          
-          {streak > 0 && (
-            <DetailCard highlighted>
-              <DetailTitle>
-                <FaTrophy /> Current Streak
-              </DetailTitle>
-              <DetailContent>
-                {streak} {streak === 1 ? 'day' : 'days'}
-              </DetailContent>
-            </DetailCard>
-          )}
-          
-          <DetailCard>
-            <DetailTitle>
-              {getTaskTypeIcon()} Task Type
-            </DetailTitle>
-            <DetailContent>
-              {type.charAt(0).toUpperCase() + type.slice(1)}
-            </DetailContent>
-          </DetailCard>
-        </TaskDetails>
-        
-        {deadline && (
-          <CalendarPopover>
-            <CalendarTrigger onClick={() => setShowCalendar(!showCalendar)}>
-              <FaCalendarDay /> View Calendar
-            </CalendarTrigger>
-            <CalendarContent show={showCalendar}>
-              <div style={{ textAlign: 'center', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                {new Date(deadline).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+        {!isEditing && (
+          <>
+            {/* Task details section */}
+            <TaskDetails>
+              {deadline && (
+                <DetailCard highlighted>
+                  <DetailTitle>
+                    <FaCalendarDay /> Due Date
+                  </DetailTitle>
+                  <DetailContent>
+                    {new Date(deadline).toLocaleDateString(undefined, {
+                      weekday: 'long',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </DetailContent>
+                </DetailCard>
+              )}
+              
+              <DetailCard>
+                <DetailTitle>
+                  <FaRegClock /> Created
+                </DetailTitle>
+                <DetailContent>
+                  {formatDate(createdAt)}
+                </DetailContent>
+              </DetailCard>
+              
+              {streak > 0 && (
+                <DetailCard highlighted>
+                  <DetailTitle>
+                    <FaTrophy /> Current Streak
+                  </DetailTitle>
+                  <DetailContent>
+                    {streak} {streak === 1 ? 'day' : 'days'}
+                  </DetailContent>
+                </DetailCard>
+              )}
+              
+              <DetailCard>
+                <DetailTitle>
+                  {getTaskTypeIcon()} Task Type
+                </DetailTitle>
+                <DetailContent>
+                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                </DetailContent>
+              </DetailCard>
+            </TaskDetails>
+            
+            {/* User feelings/notes section */}
+            <FeelingsSection>
+              <FeelingsTitle>
+                <FaRegSmile /> How are you feeling about this task?
+              </FeelingsTitle>
+              
+              <FeelingsTextarea 
+                placeholder="Add notes or reflections about how you're feeling with this task..."
+                value={userNotes}
+                onChange={(e) => setUserNotes(e.target.value)}
+              />
+              
+              <MoodSelector>
+                <MoodButton 
+                  onClick={() => setSelectedMood('happy')} 
+                  selected={selectedMood === 'happy'}
+                  aria-label="Happy"
+                >
+                  😊
+                </MoodButton>
+                <MoodButton 
+                  onClick={() => setSelectedMood('neutral')} 
+                  selected={selectedMood === 'neutral'}
+                  aria-label="Neutral"
+                >
+                  😐
+                </MoodButton>
+                <MoodButton 
+                  onClick={() => setSelectedMood('frustrated')} 
+                  selected={selectedMood === 'frustrated'}
+                  aria-label="Frustrated"
+                >
+                  😣
+                </MoodButton>
+                <MoodButton 
+                  onClick={() => setSelectedMood('accomplished')} 
+                  selected={selectedMood === 'accomplished'}
+                  aria-label="Accomplished"
+                >
+                  🎉
+                </MoodButton>
+              </MoodSelector>
+              
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <SaveButton onClick={handleSaveNotes}>
+                  Save Notes
+                </SaveButton>
               </div>
+            </FeelingsSection>
+            
+            {userNotes && selectedMood && (
               <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(7, 1fr)', 
-                gap: '4px',
-                fontSize: '0.8rem',
-                textAlign: 'center'
-              }}>
-                {/* Mini calendar representation */}
-                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
-                  <div key={i} style={{ color: 'var(--gray-500)', fontWeight: 'bold' }}>{day}</div>
-                ))}
-                {[...Array(31)].map((_, i) => {
-                  const date = new Date(deadline);
-                  const currentDate = new Date(
-                    date.getFullYear(),
-                    date.getMonth(),
-                    i + 1
-                  );
-                  
-                  const isCurrentMonth = currentDate.getMonth() === date.getMonth();
-                  const isDeadlineDay = currentDate.getDate() === date.getDate() && 
-                                        currentDate.getMonth() === date.getMonth();
-                  
-                  return isCurrentMonth ? (
-                    <div 
-                      key={i} 
-                      style={{ 
-                        padding: '4px', 
-                        borderRadius: '4px',
-                        backgroundColor: isDeadlineDay ? 'var(--primary)' : 'transparent',
-                        color: isDeadlineDay ? 'white' : 'var(--gray-700)'
-                      }}
-                    >
-                      {currentDate.getDate()}
-                    </div>
-                  ) : <div key={i} />;
-                })}
-              </div>
-            </CalendarContent>
-          </CalendarPopover>
-        )}
-        
-        {notes && (
-          <div style={{ margin: '1.5rem 0' }}>
-            <DetailTitle style={{ marginBottom: '0.75rem' }}>
-              <FaClipboard /> Notes
-            </DetailTitle>
-            <div 
-              style={{ 
+                margin: '1.5rem 0', 
                 padding: '1rem',
+                backgroundColor: 'rgba(0,0,0,0.02)',
                 borderRadius: 'var(--border-radius-md)',
-                backgroundColor: 'rgba(249, 250, 251, 0.5)',
-                border: '1px solid rgba(0,0,0,0.05)',
                 fontSize: '0.95rem',
-                color: 'var(--gray-700)',
-                lineHeight: '1.5'
-              }}
-              className="dark-mode-notes"
-            >
-              {notes}
-            </div>
-            <style>
-              {`
-                .dark-mode .dark-mode-notes {
-                  background-color: rgba(17, 24, 39, 0.4);
-                  border-color: rgba(255,255,255,0.05);
-                  color: var(--gray-300);
-                }
-              `}
-            </style>
-          </div>
+                fontStyle: 'italic',
+                color: 'var(--gray-600)'
+              }}>
+                <strong>Your notes:</strong> {userNotes} <span style={{ fontSize: '1.2rem' }}>
+                  {selectedMood === 'happy' && '😊'}
+                  {selectedMood === 'neutral' && '😐'}
+                  {selectedMood === 'frustrated' && '😣'}
+                  {selectedMood === 'accomplished' && '🎉'}
+                </span>
+              </div>
+            )}
+            
+            {/* Trackers section */}
+            {renderTrackerComponent()}
+          </>
         )}
-        
-        {renderTrackerComponent()}
       </CardContent>
       
       {completed && <ProgressBar />}
       <ExpandIndicator type={type} isExpanded={isExpanded} />
-      
-      <ActionButtonContainer>
-        <ActionButton 
-          type="edit" 
-          show={showActions} 
-          onClick={(e) => {
-            e.stopPropagation();
-            console.log('Edit task:', id);
-          }}
-        >
-          <FaPen />
-        </ActionButton>
-        <ActionButton 
-          type="delete" 
-          show={showActions} 
-          onClick={(e) => {
-            e.stopPropagation();
-            console.log('Delete task:', id);
-          }}
-        >
-          <FaTrash />
-        </ActionButton>
-      </ActionButtonContainer>
     </Card>
   );
 };

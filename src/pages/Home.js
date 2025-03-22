@@ -27,12 +27,35 @@ import DaySelector from '../components/DaySelector';
 import TaskManager from '../components/TaskManager';
 
 const HomeContainer = styled.div`
-  padding: 1.5rem 0;
+  padding: 0.75rem 1rem;
+  width: 100%;
+  margin: 0 auto;
+  
+  @media (max-width: 768px) {
+    padding: 0.75rem 0.5rem;
+  }
 `;
 
 const WelcomeSection = styled.div`
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.25rem;
+  background: linear-gradient(to bottom, 
+    var(--gray-50) 0%, 
+    rgba(255,255,255,0) 100%
+  );
+  padding: 1.5rem;
+  border-radius: var(--border-radius-lg);
+  width: 100%;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  
+  .dark-mode & {
+    background: linear-gradient(to bottom, 
+      rgba(55, 65, 81, 0.3) 0%, 
+      rgba(17, 24, 39, 0) 100%
+    );
+  }
 `;
 
 const Greeting = styled.h1`
@@ -95,20 +118,63 @@ const ProgressFill = styled.div`
 `;
 
 const TasksSection = styled.div`
-  margin-top: 2rem;
+  margin-top: 1rem;
+  background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(240,245,255,0.85) 100%);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-2);
+  overflow: hidden;
+  width: 100%;
+  padding-bottom: 1.5rem;
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+      radial-gradient(circle at 20% 40%, rgba(99, 102, 241, 0.05) 0%, transparent 40%),
+      radial-gradient(circle at 80% 20%, rgba(236, 72, 153, 0.05) 0%, transparent 40%);
+    z-index: 0;
+    border-radius: var(--border-radius-lg);
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    background: linear-gradient(135deg, rgba(30,41,59,0.95) 0%, rgba(15,23,42,0.85) 100%);
+    
+    &::before {
+      background-image: 
+        radial-gradient(circle at 20% 40%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 80% 20%, rgba(236, 72, 153, 0.08) 0%, transparent 40%);
+    }
+  }
 `;
 
 const QuoteCard = styled.div`
   background-color: var(--primary-light);
+  background-image: radial-gradient(
+    circle at 10% 20%,
+    var(--primary-light) 0%,
+    var(--primary-lighter) 90%
+  );
   border-radius: var(--border-radius);
   padding: 1.5rem;
   text-align: center;
-  margin: 2rem 0;
+  margin: 1rem auto;
   position: relative;
-  box-shadow: var(--box-shadow-sm);
+  box-shadow: var(--shadow-1);
+  max-width: 1200px;
+  width: 100%;
   
   @media (prefers-color-scheme: dark) {
     background-color: var(--primary-dark);
+    background-image: radial-gradient(
+      circle at 10% 20%,
+      var(--primary-dark) 0%,
+      var(--primary-darker) 90%
+    );
   }
 `;
 
@@ -147,15 +213,27 @@ const Author = styled.p`
 
 const MilestoneCard = styled.div`
   background-color: white;
+  background-image: radial-gradient(
+    circle at 90% 10%,
+    var(--warning-lighter) 0%,
+    white 70%
+  );
   border-radius: var(--border-radius);
   padding: 1.5rem;
-  margin: 2rem 0;
+  margin: 1rem auto;
   display: flex;
   align-items: center;
-  box-shadow: var(--box-shadow);
+  box-shadow: var(--shadow-1);
+  max-width: 1200px;
+  width: 100%;
   
   @media (prefers-color-scheme: dark) {
     background-color: var(--gray-800);
+    background-image: radial-gradient(
+      circle at 90% 10%,
+      var(--warning-darker) 0%,
+      var(--gray-800) 70%
+    );
   }
 `;
 
@@ -937,6 +1015,60 @@ const getCategoryDisplayName = (category) => {
   }
 };
 
+// Add this new component to the bottom of the styled components section
+const EmptyStateWrapper = styled.div`
+  padding: 2rem;
+  text-align: center;
+  margin: 1rem 0;
+  background-color: white;
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-1);
+  border: 1px dashed var(--gray-300);
+  
+  svg {
+    font-size: 2.5rem;
+    color: var(--gray-400);
+    margin-bottom: 1rem;
+  }
+  
+  h3 {
+    margin: 0 0 0.5rem;
+    color: var(--gray-700);
+  }
+  
+  p {
+    color: var(--gray-500);
+    margin: 0 0 1rem;
+  }
+  
+  button {
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-weight: 500;
+    
+    &:hover {
+      background-color: var(--primary-dark);
+    }
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    background-color: var(--gray-800);
+    border-color: var(--gray-700);
+    
+    h3 {
+      color: var(--gray-200);
+    }
+    
+    p {
+      color: var(--gray-400);
+    }
+  }
+`;
+
 const Home = () => {
   const { 
     currentDay, 
@@ -1056,17 +1188,32 @@ const Home = () => {
   const milestone = getMilestone();
   const weekTheme = getWeekTheme();
   
+  // Add this new function
+  const renderEmptyState = () => {
+    if (dayPlan && dayPlan.tasks && dayPlan.tasks.length > 0) {
+      return null;
+    }
+    
+    return (
+      <EmptyStateWrapper>
+        <FaCalendarAlt />
+        <h3>No Tasks for Day {currentDay}</h3>
+        <p>There are no tasks planned for today. You can add custom tasks or select a different day.</p>
+      </EmptyStateWrapper>
+    );
+  };
+  
   return (
     <HomeContainer>
       <WelcomeSection>
         <Greeting>
-          {profile.name ? `Hello, ${profile.name}!` : 'Welcome to your Kimji transformation!'}
+          {profile.name ? `Hello, ${profile.name}!` : 'Welcome to your transformation!'}
         </Greeting>
         <DayTitle>
           <FaCalendarAlt /> Day {currentDay}: {dayPlan?.title || ''}
         </DayTitle>
         <Subheading>
-          Week {getCurrentWeek()}: {weekTheme} - Build consistent habits with Kimji Transform in 21 days.
+          Week {getCurrentWeek()}: {weekTheme} - Build consistent habits in 21 days.
         </Subheading>
         
         <DaySelector />
@@ -1102,6 +1249,8 @@ const Home = () => {
       <TasksSection>
         <TaskManager day={currentDay} />
       </TasksSection>
+      
+      {renderEmptyState()}
     </HomeContainer>
   );
 };
