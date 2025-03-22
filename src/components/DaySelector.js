@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext } from '../context/AppContext';
 import styled from 'styled-components';
-import { FaCalendarAlt, FaCheck, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { FaCalendarAlt, FaCheck, FaChevronLeft, FaChevronRight, FaLock } from 'react-icons/fa';
 
 // Styled components with Material Design principles
 const DaySelectorWrapper = styled.div`
@@ -194,19 +194,19 @@ const DayCard = styled.div`
   color: ${props => props.active ? 'white' : 'var(--gray-700)'};
   border-radius: var(--border-radius-lg);
   padding: 0.75rem;
-  cursor: pointer;
+  cursor: ${props => props.locked ? 'not-allowed' : 'pointer'};
   position: relative;
   overflow: hidden;
   box-shadow: ${props => props.active ? 'var(--shadow-2)' : 'none'};
   transition: all 250ms cubic-bezier(0.34, 1.56, 0.64, 1);
   
   &:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-2);
+    transform: ${props => props.locked ? 'none' : 'translateY(-3px)'};
+    box-shadow: ${props => props.locked ? 'none' : 'var(--shadow-2)'};
   }
   
   &:active {
-    transform: translateY(-1px);
+    transform: ${props => props.locked ? 'none' : 'translateY(-1px)'};
   }
   
   ${props => props.completed && !props.active && `
@@ -225,6 +225,12 @@ const DayCard = styled.div`
     }
   `}
   
+  ${props => props.locked && `
+    opacity: 0.7;
+    background-color: var(--gray-200);
+    color: var(--gray-500);
+  `}
+  
   .dark-mode & {
     background-color: ${props => props.active ? 'var(--primary)' : 'var(--gray-800)'};
     color: ${props => props.active ? 'white' : 'var(--gray-300)'};
@@ -233,6 +239,12 @@ const DayCard = styled.div`
       background-color: var(--gray-800);
       border: 1px solid var(--success);
       color: var(--gray-300);
+    `}
+    
+    ${props => props.locked && `
+      opacity: 0.7;
+      background-color: var(--gray-900);
+      color: var(--gray-600);
     `}
   }
 `;
@@ -301,6 +313,35 @@ const NavigationButton = styled.button`
   }
 `;
 
+const LockIcon = styled.div`
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  color: var(--gray-500);
+  font-size: 14px;
+  
+  .dark-mode & {
+    color: var(--gray-600);
+  }
+`;
+
+const LockedOverlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  
+  .dark-mode & {
+    background-color: rgba(0, 0, 0, 0.2);
+  }
+`;
+
 const DaySelector = () => {
   const { currentDay, weekPlan = [], dispatch } = useAppContext();
   const [activeWeek, setActiveWeek] = useState(Math.ceil(currentDay / 7));
@@ -341,7 +382,13 @@ const DaySelector = () => {
   };
 
   // Simple direct click handler
-  const handleDaySelect = (day) => {
+  const handleDaySelect = (day, isLocked) => {
+    // Don't allow selecting locked days
+    if (isLocked) {
+      console.log(`Day ${day} is locked and not selectable yet`);
+      return;
+    }
+    
     console.log(`Button clicked for day ${day}`);
     
     if (dispatch) {
@@ -447,6 +494,11 @@ const DaySelector = () => {
     }
   };
 
+  // Determine if a day is locked (future day that can't be accessed yet)
+  const isDayLocked = (day) => {
+    return day > currentDay;
+  };
+
   return (
     <DaySelectorWrapper>
       <WeekTabsContainer>
@@ -504,19 +556,30 @@ const DaySelector = () => {
           {daysToShow.map((day, index) => {
             const isActive = day === currentDay;
             const isCompleted = getDayCompletionStatus(day);
+            const isLocked = isDayLocked(day);
             
             return (
               <DayCard
                 key={day}
                 active={isActive}
                 completed={isCompleted}
-                onClick={() => handleDaySelect(day)}
+                locked={isLocked}
+                onClick={() => handleDaySelect(day, isLocked)}
                 className="day-card"
                 aria-label={`Day ${day}: ${getDayTitle(day)}`}
               >
                 <DayNumber>{day}</DayNumber>
                 <DayName>{getDayTitle(day)}</DayName>
                 <DayDate>{getDateByIndex(day - 1)}</DayDate>
+                
+                {isLocked && (
+                  <>
+                    <LockIcon>
+                      <FaLock />
+                    </LockIcon>
+                    <LockedOverlay />
+                  </>
+                )}
                 
                 <ProgressIndicator active={isActive}>
                   <ProgressBar percent={getCompletionPercentage(day, day)} />
