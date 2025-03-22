@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { 
   FaBell, 
@@ -15,19 +15,47 @@ import {
   FaUsers,
   FaComments,
   FaMoneyBillWave,
-  FaPrayingHands
+  FaPrayingHands,
+  FaCalendarAlt, 
+  FaLightbulb,
+  FaInfoCircle,
+  FaGift
 } from 'react-icons/fa';
 import { useAppContext } from '../context/AppContext';
 import TaskCard from '../components/TaskCard';
 import DaySelector from '../components/DaySelector';
+import TaskManager from '../components/TaskManager';
 
 const HomeContainer = styled.div`
-  padding: 1.5rem 0;
+  padding: 0.75rem 1rem;
+  width: 100%;
+  margin: 0 auto;
+  
+  @media (max-width: 768px) {
+    padding: 0.75rem 0.5rem;
+  }
 `;
 
 const WelcomeSection = styled.div`
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.25rem;
+  background: linear-gradient(to bottom, 
+    var(--gray-50) 0%, 
+    rgba(255,255,255,0) 100%
+  );
+  padding: 1.5rem;
+  border-radius: var(--border-radius-lg);
+  width: 100%;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  
+  .dark-mode & {
+    background: linear-gradient(to bottom, 
+      rgba(55, 65, 81, 0.3) 0%, 
+      rgba(17, 24, 39, 0) 100%
+    );
+  }
 `;
 
 const Greeting = styled.h1`
@@ -45,13 +73,20 @@ const DayTitle = styled.h2`
   font-weight: 600;
   margin-bottom: 1rem;
   color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  svg {
+    margin-right: 0.5rem;
+  }
 `;
 
 const Subheading = styled.p`
   color: var(--gray-600);
   font-size: 1rem;
   max-width: 600px;
-  margin: 0 auto;
+  margin: 0 auto 1.5rem;
   
   @media (prefers-color-scheme: dark) {
     color: var(--gray-400);
@@ -83,7 +118,166 @@ const ProgressFill = styled.div`
 `;
 
 const TasksSection = styled.div`
-  margin-top: 2rem;
+  margin-top: 1rem;
+  background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(240,245,255,0.85) 100%);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-2);
+  overflow: hidden;
+  width: 100%;
+  padding-bottom: 1.5rem;
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+      radial-gradient(circle at 20% 40%, rgba(99, 102, 241, 0.05) 0%, transparent 40%),
+      radial-gradient(circle at 80% 20%, rgba(236, 72, 153, 0.05) 0%, transparent 40%);
+    z-index: 0;
+    border-radius: var(--border-radius-lg);
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    background: linear-gradient(135deg, rgba(30,41,59,0.95) 0%, rgba(15,23,42,0.85) 100%);
+    
+    &::before {
+      background-image: 
+        radial-gradient(circle at 20% 40%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 80% 20%, rgba(236, 72, 153, 0.08) 0%, transparent 40%);
+    }
+  }
+`;
+
+const QuoteCard = styled.div`
+  background-color: var(--primary-light);
+  background-image: radial-gradient(
+    circle at 10% 20%,
+    var(--primary-light) 0%,
+    var(--primary-lighter) 90%
+  );
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  text-align: center;
+  margin: 1rem auto;
+  position: relative;
+  box-shadow: var(--shadow-1);
+  max-width: 1200px;
+  width: 100%;
+  
+  @media (prefers-color-scheme: dark) {
+    background-color: var(--primary-dark);
+    background-image: radial-gradient(
+      circle at 10% 20%,
+      var(--primary-dark) 0%,
+      var(--primary-darker) 90%
+    );
+  }
+`;
+
+const QuoteIcon = styled.div`
+  position: absolute;
+  top: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: var(--primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const Quote = styled.p`
+  font-size: 1.1rem;
+  font-style: italic;
+  margin: 0 0 0.5rem;
+  color: var(--gray-900);
+  
+  @media (prefers-color-scheme: dark) {
+    color: var(--gray-100);
+  }
+`;
+
+const Author = styled.p`
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--primary);
+`;
+
+const MilestoneCard = styled.div`
+  background-color: white;
+  background-image: radial-gradient(
+    circle at 90% 10%,
+    var(--warning-lighter) 0%,
+    white 70%
+  );
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  margin: 1rem auto;
+  display: flex;
+  align-items: center;
+  box-shadow: var(--shadow-1);
+  max-width: 1200px;
+  width: 100%;
+  
+  @media (prefers-color-scheme: dark) {
+    background-color: var(--gray-800);
+    background-image: radial-gradient(
+      circle at 90% 10%,
+      var(--warning-darker) 0%,
+      var(--gray-800) 70%
+    );
+  }
+`;
+
+const MilestoneIcon = styled.div`
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: var(--warning-light);
+  color: var(--warning);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  margin-right: 1.5rem;
+  flex-shrink: 0;
+  
+  @media (prefers-color-scheme: dark) {
+    background-color: var(--warning-dark);
+  }
+`;
+
+const MilestoneContent = styled.div`
+  flex: 1;
+`;
+
+const MilestoneTitle = styled.h3`
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  color: var(--gray-900);
+  
+  @media (prefers-color-scheme: dark) {
+    color: var(--gray-100);
+  }
+`;
+
+const MilestoneDescription = styled.p`
+  font-size: 0.9rem;
+  margin: 0;
+  color: var(--gray-600);
+  
+  @media (prefers-color-scheme: dark) {
+    color: var(--gray-400);
+  }
 `;
 
 const EmptyState = styled.div`
@@ -621,6 +815,7 @@ const TaskListContent = styled.div`
   opacity: ${props => props.isExpanded ? '1' : '0'};
   transition: all 0.3s ease;
   overflow: hidden;
+  padding: ${props => props.isExpanded ? '1rem 0' : '0'};
 `;
 
 const TaskItem = styled.div`
@@ -820,409 +1015,242 @@ const getCategoryDisplayName = (category) => {
   }
 };
 
+// Add this new component to the bottom of the styled components section
+const EmptyStateWrapper = styled.div`
+  padding: 2rem;
+  text-align: center;
+  margin: 1rem 0;
+  background-color: white;
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-1);
+  border: 1px dashed var(--gray-300);
+  
+  svg {
+    font-size: 2.5rem;
+    color: var(--gray-400);
+    margin-bottom: 1rem;
+  }
+  
+  h3 {
+    margin: 0 0 0.5rem;
+    color: var(--gray-700);
+  }
+  
+  p {
+    color: var(--gray-500);
+    margin: 0 0 1rem;
+  }
+  
+  button {
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-weight: 500;
+    
+    &:hover {
+      background-color: var(--primary-dark);
+    }
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    background-color: var(--gray-800);
+    border-color: var(--gray-700);
+    
+    h3 {
+      color: var(--gray-200);
+    }
+    
+    p {
+      color: var(--gray-400);
+    }
+  }
+`;
+
 const Home = () => {
   const { 
     currentDay, 
     weekPlan, 
+    profile, 
     calculateDayScore, 
-    dispatch, 
     taskCategories,
     getTasksByCategory
   } = useAppContext();
   
-  const [showAddTaskForm, setShowAddTaskForm] = useState(false);
-  const [newTask, setNewTask] = useState({
-    title: '',
-    description: '',
-    category: 'all-day',
-    taskCategory: taskCategories.PERSONAL_GROWTH,
-    points: 10
-  });
+  const [dayScore, setDayScore] = useState({ score: 0, total: 0, percentage: 0 });
   
-  // Add state for checklist expanded
-  const [checklistExpanded, setChecklistExpanded] = useState(false);
+  // Log important state for debugging
+  useEffect(() => {
+    console.log("Home component rendered with currentDay:", currentDay);
+    if (weekPlan) {
+      console.log("weekPlan in Home exists with length:", weekPlan.length);
+    } else {
+      console.log("weekPlan in Home is null or undefined");
+    }
+  }, [currentDay, weekPlan]);
   
-  // State to track open/closed categories
-  const [openCategories, setOpenCategories] = useState({
-    [taskCategories.PERSONAL_GROWTH]: false,
-    [taskCategories.EMOTIONAL_HEALTH]: false,
-    [taskCategories.MENTAL_FITNESS]: false,
-    [taskCategories.PHYSICAL_HEALTH]: false,
-    [taskCategories.RELATIONSHIPS]: false,
-    [taskCategories.SOCIAL]: false,
-    [taskCategories.FINANCIAL]: false,
-    [taskCategories.MINDFULNESS]: false,
-    custom: false
-  });
+  // Get the current day plan
+  const dayPlan = weekPlan?.find(d => d?.day === currentDay) || null;
   
-  // Toggle category expanded/collapsed
-  const toggleCategory = (category) => {
-    setOpenCategories({
-      ...openCategories,
-      [category]: !openCategories[category]
-    });
-  };
+  // Log the found dayPlan
+  useEffect(() => {
+    console.log("Current dayPlan:", dayPlan);
+    if (dayPlan) {
+      console.log("Tasks in dayPlan:", dayPlan.tasks?.length || 0);
+    } else {
+      console.log("No dayPlan found for day", currentDay);
+    }
+  }, [dayPlan, currentDay]);
   
-  // Get current day's data
-  const todayPlan = weekPlan ? weekPlan.find(day => day.day === currentDay) : null;
+  // Calculate the score whenever currentDay or weekPlan changes
+  useEffect(() => {
+    if (dayPlan && typeof calculateDayScore === 'function') {
+      const score = calculateDayScore(dayPlan);
+      setDayScore(score);
+    } else {
+      // Set default score if dayPlan is not available
+      setDayScore({ score: 0, total: 0, percentage: 0 });
+    }
+  }, [currentDay, weekPlan, calculateDayScore, dayPlan]);
   
-  // Calculate score for today
-  const dayScore = todayPlan ? calculateDayScore(todayPlan) : { score: 0, total: 0, percentage: 0, categories: [] };
-  
-  // Get upcoming task (first incomplete task)
-  const getUpcomingTask = () => {
-    if (!todayPlan) return null;
-    
-    return todayPlan.tasks.find(task => !task.completed);
-  };
-  
-  const handleAddTask = () => {
-    if (!newTask.title.trim()) return;
-    
-    dispatch({
-      type: 'ADD_CUSTOM_TASK',
-      payload: {
-        ...newTask,
-        day: currentDay
-      }
-    });
-    
-    // Reset form
-    setNewTask({
-      title: '',
-      description: '',
-      category: 'all-day',
-      taskCategory: taskCategories.PERSONAL_GROWTH,
-      points: 10
-    });
-    
-    // Hide form
-    setShowAddTaskForm(false);
-    
-    // No need to ensure custom category is expanded
-    // We want to keep everything collapsed as per user's preference
-  };
-  
-  // Get custom tasks
-  const getCustomTasks = () => {
-    if (!todayPlan) return [];
-    return todayPlan.tasks.filter(task => task.type === "custom");
-  };
-  
-  const upcomingTask = getUpcomingTask();
-  const customTasks = getCustomTasks();
-  
-  // Get categories that have tasks
-  const getCategories = () => {
-    if (!todayPlan) return [];
-    
-    // Get all unique categories
-    const categories = [...new Set(todayPlan.tasks.map(task => task.taskCategory || 'custom'))];
-    
-    // Sort categories in the desired order
-    const categoryOrder = [
-      taskCategories.PERSONAL_GROWTH,
-      taskCategories.EMOTIONAL_HEALTH,
-      taskCategories.MENTAL_FITNESS,
-      taskCategories.PHYSICAL_HEALTH,
-      taskCategories.RELATIONSHIPS,
-      taskCategories.SOCIAL,
-      taskCategories.FINANCIAL,
-      taskCategories.MINDFULNESS,
-      'custom'
+  // Get motivational quote based on the current day
+  const getQuote = () => {
+    const quotes = [
+      { text: "The secret of getting ahead is getting started.", author: "Mark Twain" },
+      { text: "It's not about perfect. It's about effort.", author: "Jillian Michaels" },
+      { text: "Don't watch the clock; do what it does. Keep going.", author: "Sam Levenson" },
+      { text: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
+      { text: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" },
+      { text: "Your body can stand almost anything. It's your mind that you have to convince.", author: "Andrew Murphy" },
+      { text: "The difference between try and triumph is just a little umph!", author: "Marvin Phillips" },
+      { text: "The best way to predict the future is to create it.", author: "Abraham Lincoln" },
+      { text: "The harder you work for something, the greater you'll feel when you achieve it.", author: "Anonymous" },
+      { text: "If you want to achieve greatness stop asking for permission.", author: "Anonymous" },
+      { text: "Small daily improvements are the key to staggering long-term results.", author: "Anonymous" },
+      { text: "Success is the sum of small efforts, repeated day in and day out.", author: "Robert Collier" },
+      { text: "The only limit to our realization of tomorrow is our doubts of today.", author: "Franklin D. Roosevelt" },
+      { text: "When you feel like quitting, think about why you started.", author: "Anonymous" },
+      { text: "Don't limit your challenges. Challenge your limits.", author: "Anonymous" },
+      { text: "If it doesn't challenge you, it doesn't change you.", author: "Fred DeVito" },
+      { text: "The pain you feel today will be the strength you feel tomorrow.", author: "Anonymous" },
+      { text: "Your body hears everything your mind says.", author: "Naomi Judd" },
+      { text: "You don't have to be great to start, but you have to start to be great.", author: "Zig Ziglar" },
+      { text: "Once you learn to quit, it becomes a habit.", author: "Vince Lombardi" },
+      { text: "Celebrate your small wins. They all add up to the big ones.", author: "Anonymous" }
     ];
     
-    return categories.sort((a, b) => {
-      const indexA = categoryOrder.indexOf(a);
-      const indexB = categoryOrder.indexOf(b);
-      return indexA - indexB;
-    });
+    // Use the current day as an index, rotating through the quotes
+    return quotes[(currentDay - 1) % quotes.length];
   };
   
-  const categories = getCategories();
+  // Get the milestone message for specific days
+  const getMilestone = () => {
+    if (currentDay === 7) {
+      return {
+        title: "Week 1 Complete!",
+        description: "Congratulations on completing the first week! You've laid a solid foundation for your transformation.",
+        icon: <FaTrophy />
+      };
+    } else if (currentDay === 14) {
+      return {
+        title: "Week 2 Complete!",
+        description: "You're two-thirds of the way through! Your dedication is creating lasting change.",
+        icon: <FaTrophy />
+      };
+    } else if (currentDay === 21) {
+      return {
+        title: "21-Day Challenge Complete!",
+        description: "Incredible! You've completed the full 21-day transformation journey. Take time to reflect on how far you've come.",
+        icon: <FaGift />
+      };
+    }
+    
+    return null;
+  };
+  
+  // Get week number (1, 2, or 3)
+  const getCurrentWeek = () => {
+    return Math.ceil(currentDay / 7);
+  };
+  
+  // Get week theme
+  const getWeekTheme = () => {
+    const week = getCurrentWeek();
+    if (week === 1) return "Foundation";
+    if (week === 2) return "Expansion";
+    if (week === 3) return "Mastery";
+    return "";
+  };
+  
+  const quote = getQuote();
+  const milestone = getMilestone();
+  const weekTheme = getWeekTheme();
+  
+  // Add this new function
+  const renderEmptyState = () => {
+    if (dayPlan && dayPlan.tasks && dayPlan.tasks.length > 0) {
+      return null;
+    }
+    
+    return (
+      <EmptyStateWrapper>
+        <FaCalendarAlt />
+        <h3>No Tasks for Day {currentDay}</h3>
+        <p>There are no tasks planned for today. You can add custom tasks or select a different day.</p>
+      </EmptyStateWrapper>
+    );
+  };
   
   return (
     <HomeContainer>
       <WelcomeSection>
-        <Greeting>Welcome to TransformWeek</Greeting>
+        <Greeting>
+          {profile.name ? `Hello, ${profile.name}!` : 'Welcome to your transformation!'}
+        </Greeting>
+        <DayTitle>
+          <FaCalendarAlt /> Day {currentDay}: {dayPlan?.title || ''}
+        </DayTitle>
         <Subheading>
-          Your 7-day journey to build healthy habits and transform your life, one day at a time.
+          Week {getCurrentWeek()}: {weekTheme} - Build consistent habits in 21 days.
+        </Subheading>
+        
+        <DaySelector />
+        
+        <ProgressBar>
+          <ProgressFill percent={dayScore.percentage} />
+        </ProgressBar>
+        <Subheading>
+          Today's Progress: {dayScore.score}/{dayScore.total} points ({dayScore.percentage}% complete)
         </Subheading>
       </WelcomeSection>
       
-      <DaySelector />
-      
-      {todayPlan && (
-        <>
-          <DayTitle>Day {currentDay}: {todayPlan.title}</DayTitle>
-          
-          <StatsCards>
-            <StatCard>
-              <StatIcon color="#4ADE80">
-                <FaCheck />
-              </StatIcon>
-              <StatValue>{dayScore.percentage}%</StatValue>
-              <StatLabel>Completion</StatLabel>
-            </StatCard>
-            
-            <StatCard>
-              <StatIcon color="#F59E0B">
-                <FaTrophy />
-              </StatIcon>
-              <StatValue>{dayScore.score}/{dayScore.total}</StatValue>
-              <StatLabel>Points Earned</StatLabel>
-            </StatCard>
-            
-            <StatCard>
-              <StatIcon color="#4F46E5">
-                <FaRegClock />
-              </StatIcon>
-              <StatValue>{todayPlan.tasks.length - todayPlan.tasks.filter(t => t.completed).length}</StatValue>
-              <StatLabel>Tasks Remaining</StatLabel>
-            </StatCard>
-          </StatsCards>
-          
-          <ProgressBar>
-            <ProgressFill percent={dayScore.percentage} />
-          </ProgressBar>
-          
-          <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-            <Subheading>
-              {dayScore.percentage === 100 
-                ? 'Amazing! You\'ve completed all tasks for today.' 
-                : `${dayScore.percentage}% complete - Keep going!`}
-            </Subheading>
-          </div>
-          
-          {upcomingTask && (
-            <Reminder>
-              <ReminderIcon>
-                <FaBell />
-              </ReminderIcon>
-              <ReminderText>
-                <p>Next up: {upcomingTask.title}</p>
-                <small>{upcomingTask.description}</small>
-              </ReminderText>
-            </Reminder>
-          )}
-          
-          {/* Add the Task List with checkboxes */}
-          {todayPlan && todayPlan.tasks && todayPlan.tasks.length > 0 && (
-            <TaskListContainer isExpanded={checklistExpanded}>
-              <TaskListTitle 
-                isExpanded={checklistExpanded}
-                onClick={() => setChecklistExpanded(!checklistExpanded)}
-              >
-                <div className="title-content">
-                  <FaCheck /> Daily Task Checklist
-                </div>
-                <ExpandButton>
-                  {checklistExpanded ? <FaChevronUp /> : <FaChevronDown />}
-                </ExpandButton>
-              </TaskListTitle>
-              
-              <TaskListContent isExpanded={checklistExpanded}>
-                {todayPlan.tasks.map(task => (
-                  <TaskItem key={task.id}>
-                    <TaskCheckbox 
-                      completed={task.completed}
-                      onClick={() => dispatch({
-                        type: 'TOGGLE_TASK',
-                        payload: { 
-                          taskId: task.id,
-                          dispatch
-                        }
-                      })}
-                    >
-                      {task.completed && <FaCheck />}
-                    </TaskCheckbox>
-                    
-                    <TaskDetails>
-                      <TaskName completed={task.completed}>
-                        {task.title}
-                      </TaskName>
-                      <div style={{ display: 'flex', marginTop: '0.25rem', flexWrap: 'wrap' }}>
-                        <TaskTag category={task.taskCategory}>
-                          {getCategoryDisplayName(task.taskCategory)}
-                        </TaskTag>
-                        <TaskCategoryLabel category={task.category || 'all-day'}>
-                          {!task.category || task.category === 'all-day' ? 'All Day' : 
-                           task.category.charAt(0).toUpperCase() + task.category.slice(1)}
-                        </TaskCategoryLabel>
-                        <TaskPoints>
-                          <FaTrophy /> {task.points || 10} pts
-                        </TaskPoints>
-                      </div>
-                    </TaskDetails>
-                  </TaskItem>
-                ))}
-              </TaskListContent>
-            </TaskListContainer>
-          )}
-          
-          {showAddTaskForm ? (
-            <AddTaskForm>
-              <FormTitle>
-                <FaPlus /> Add Custom Task
-              </FormTitle>
-              
-              <FormGroup>
-                <Label htmlFor="taskTitle">Task Title *</Label>
-                <Input 
-                  id="taskTitle"
-                  value={newTask.title}
-                  onChange={(e) => setNewTask({...newTask, title: e.target.value})}
-                  placeholder="e.g., Read 20 pages"
-                />
-              </FormGroup>
-              
-              <FormGroup>
-                <Label htmlFor="taskDescription">Description (Optional)</Label>
-                <TextArea 
-                  id="taskDescription"
-                  value={newTask.description}
-                  onChange={(e) => setNewTask({...newTask, description: e.target.value})}
-                  placeholder="Describe your task..."
-                />
-              </FormGroup>
-              
-              <FormGroup>
-                <Label htmlFor="taskCategory">Time of Day</Label>
-                <Select 
-                  id="taskCategory"
-                  value={newTask.category}
-                  onChange={(e) => setNewTask({...newTask, category: e.target.value})}
-                >
-                  <option value="morning">Morning</option>
-                  <option value="afternoon">Afternoon</option>
-                  <option value="evening">Evening</option>
-                  <option value="all-day">All Day</option>
-                </Select>
-              </FormGroup>
-              
-              <FormGroup>
-                <Label htmlFor="taskType">Task Category</Label>
-                <Select 
-                  id="taskType"
-                  value={newTask.taskCategory}
-                  onChange={(e) => setNewTask({...newTask, taskCategory: e.target.value})}
-                >
-                  <option value={taskCategories.PERSONAL_GROWTH}>Personal Growth</option>
-                  <option value={taskCategories.EMOTIONAL_HEALTH}>Emotional Health</option>
-                  <option value={taskCategories.MENTAL_FITNESS}>Mental Fitness</option>
-                  <option value={taskCategories.PHYSICAL_HEALTH}>Physical Health</option>
-                  <option value={taskCategories.RELATIONSHIPS}>Relationships</option>
-                  <option value={taskCategories.SOCIAL}>Social & Communication</option>
-                  <option value={taskCategories.FINANCIAL}>Financial Wellness</option>
-                  <option value={taskCategories.MINDFULNESS}>Mindfulness</option>
-                </Select>
-              </FormGroup>
-              
-              <FormGroup>
-                <Label htmlFor="taskPoints">Task Points ({newTask.points})</Label>
-                <PointsRange>
-                  <RangeInput 
-                    type="range"
-                    id="taskPoints"
-                    min="5"
-                    max="30"
-                    step="5"
-                    value={newTask.points}
-                    onChange={(e) => setNewTask({...newTask, points: parseInt(e.target.value)})}
-                  />
-                  <PointsValue>{newTask.points} pts</PointsValue>
-                </PointsRange>
-              </FormGroup>
-              
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                <AddButton 
-                  onClick={handleAddTask}
-                  disabled={!newTask.title.trim()}
-                >
-                  <FaPlus /> Add Task
-                </AddButton>
-                <AddButton 
-                  style={{ backgroundColor: 'var(--gray-300)', color: 'var(--gray-700)' }}
-                  onClick={() => setShowAddTaskForm(false)}
-                >
-                  Cancel
-                </AddButton>
-              </div>
-            </AddTaskForm>
-          ) : (
-            <ToggleFormButton onClick={() => setShowAddTaskForm(true)}>
-              <FaPlus /> Add Custom Task
-            </ToggleFormButton>
-          )}
-          
-          <TasksSection>
-            {categories.map(category => {
-              // Skip empty categories
-              const categoryTasks = category === 'custom' 
-                ? customTasks 
-                : getTasksByCategory(todayPlan, category);
-              
-              if (categoryTasks.length === 0) return null;
-              
-              // Find this category in the day score
-              const categoryScore = dayScore.categories.find(c => c.category === category) || {
-                earned: 0,
-                total: 0,
-                percentage: 0
-              };
-              
-              return (
-                <CategorySection key={category}>
-                  <CategoryHeader 
-                    isOpen={openCategories[category]} 
-                    category={category}
-                    onClick={() => toggleCategory(category)}
-                  >
-                    <CategoryInfo>
-                      <CategoryIcon category={category}>
-                        {getCategoryIcon(category)}
-                      </CategoryIcon>
-                      <div>
-                        <CategoryTitle>{getCategoryDisplayName(category)}</CategoryTitle>
-                        <CategoryProgress>
-                          {categoryScore.earned}/{categoryScore.total} points
-                          <CategoryBadge 
-                            completed={categoryScore.percentage === 100}
-                          >
-                            {categoryTasks.filter(t => t.completed).length}/{categoryTasks.length}
-                          </CategoryBadge>
-                        </CategoryProgress>
-                        <CategoryProgressBar>
-                          <CategoryProgressFill 
-                            percent={categoryScore.percentage}
-                            category={category}
-                          />
-                        </CategoryProgressBar>
-                      </div>
-                    </CategoryInfo>
-                    <ExpandButton>
-                      {openCategories[category] ? <FaChevronUp /> : <FaChevronDown />}
-                    </ExpandButton>
-                  </CategoryHeader>
-                  
-                  <CategoryContent isOpen={openCategories[category]}>
-                    {categoryTasks.map(task => (
-                      <TaskCard key={task.id} task={task} />
-                    ))}
-                  </CategoryContent>
-                </CategorySection>
-              );
-            })}
-          </TasksSection>
-        </>
+      {milestone && (
+        <MilestoneCard>
+          <MilestoneIcon>
+            {milestone.icon}
+          </MilestoneIcon>
+          <MilestoneContent>
+            <MilestoneTitle>{milestone.title}</MilestoneTitle>
+            <MilestoneDescription>{milestone.description}</MilestoneDescription>
+          </MilestoneContent>
+        </MilestoneCard>
       )}
       
-      {!todayPlan && (
-        <EmptyState>
-          <h3>No tasks found for today</h3>
-          <p>Please select a different day or check back later.</p>
-        </EmptyState>
-      )}
+      <QuoteCard>
+        <QuoteIcon>
+          <FaLightbulb />
+        </QuoteIcon>
+        <Quote>"{quote.text}"</Quote>
+        <Author>— {quote.author}</Author>
+      </QuoteCard>
+      
+      <TasksSection>
+        <TaskManager day={currentDay} />
+      </TasksSection>
+      
+      {renderEmptyState()}
     </HomeContainer>
   );
 };

@@ -7,7 +7,8 @@ import {
   FaInfoCircle, 
   FaMoon, 
   FaSun, 
-  FaDownload
+  FaDownload,
+  FaCheck
 } from 'react-icons/fa';
 import { useAppContext } from '../context/AppContext';
 
@@ -292,12 +293,81 @@ const NotificationTime = styled.div`
   }
 `;
 
+const ThemeOptions = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.8rem;
+  margin-top: 1rem;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+`;
+
+const ThemeOption = styled.button`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  border-radius: var(--border-radius);
+  border: 2px solid ${props => props.selected ? 'var(--primary)' : 'transparent'};
+  background-color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--box-shadow-sm);
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    background-color: var(--gray-800);
+  }
+`;
+
+const ThemeColor = styled.div`
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: ${props => props.color};
+  margin-bottom: 0.5rem;
+  box-shadow: var(--box-shadow-sm);
+`;
+
+const ThemeName = styled.span`
+  font-size: 0.8rem;
+  color: var(--gray-800);
+  margin-top: 0.5rem;
+  
+  @media (prefers-color-scheme: dark) {
+    color: var(--gray-200);
+  }
+`;
+
+const SelectedIndicator = styled.div`
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+`;
+
 const Settings = () => {
   const { 
     profile, 
     darkMode, 
     notifications, 
-    notificationTimes, 
+    notificationTimes,
+    theme,
+    themes,
     weekPlan,
     stats,
     dispatch
@@ -341,35 +411,30 @@ const Settings = () => {
   };
   
   const handleExportData = () => {
-    const data = {
+    const userData = {
+      profile,
       weekPlan,
       stats,
-      profile: {
-        name,
-        wakeUpTime,
-        sleepTime
-      },
-      notificationTimes: {
-        morning: morningNotification,
-        afternoon: afternoonNotification,
-        evening: eveningNotification
-      },
-      exportDate: new Date().toISOString()
+      settings: {
+        darkMode,
+        notifications,
+        notificationTimes
+      }
     };
     
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
+    const dataStr = JSON.stringify(userData);
+    const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
     
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `transformweek-export-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
+    const exportFileDefaultName = 'kimji_transform_data.json';
     
-    setTimeout(() => {
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }, 100);
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+  };
+
+  const handleThemeChange = (themeId) => {
+    dispatch({ type: 'SET_THEME', payload: themeId });
   };
   
   return (
@@ -494,6 +559,31 @@ const Settings = () => {
             <Slider />
           </ToggleSwitch>
         </SettingRow>
+        
+        <SettingRow>
+          <SettingLabel>
+            <SettingTitle>Theme</SettingTitle>
+            <SettingDescription>Choose your favorite color theme</SettingDescription>
+          </SettingLabel>
+        </SettingRow>
+        
+        <ThemeOptions>
+          {Object.values(themes).map((themeOption) => (
+            <ThemeOption 
+              key={themeOption.id}
+              onClick={() => handleThemeChange(themeOption.id)}
+              selected={theme === themeOption.id}
+            >
+              {theme === themeOption.id && (
+                <SelectedIndicator>
+                  <FaCheck />
+                </SelectedIndicator>
+              )}
+              <ThemeColor color={themeOption.colors.primary} />
+              <ThemeName>{themeOption.name}</ThemeName>
+            </ThemeOption>
+          ))}
+        </ThemeOptions>
       </SettingsCard>
       
       <SettingsCard>

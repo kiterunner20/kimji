@@ -4,14 +4,14 @@ import { getFirestore } from "firebase/firestore";
 import { getAuth, GoogleAuthProvider, FacebookAuthProvider } from "firebase/auth";
 
 // Your web app's Firebase configuration
-// You'll need to replace these with your actual Firebase configuration values
+// Using mock configuration for development
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "mock-api-key",
+  authDomain: "mock-project.firebaseapp.com",
+  projectId: "mock-project",
+  storageBucket: "mock-project.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:abcdef123456"
 };
 
 // Initialize Firebase
