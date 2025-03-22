@@ -394,6 +394,7 @@ const initialState = {
   weekPlan: null,
   startDate: null,
   darkMode: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches,
+  workMode: false, // Add workMode state
   theme: 'default', // Default theme
   notifications: true,
   notificationTimes: {
@@ -778,6 +779,9 @@ function reducer(state, action) {
     case 'TOGGLE_DARK_MODE':
       return { ...state, darkMode: !state.darkMode };
     
+    case 'TOGGLE_WORK_MODE':
+      return { ...state, workMode: !state.workMode };
+    
     case 'SET_THEME':
       return { ...state, theme: action.payload };
     
@@ -1052,7 +1056,9 @@ export const AppProvider = ({ children }) => {
       taskCategories,
       categoryPoints,
       defaultReminderTimes,
-      themes
+      themes,
+      toggleDarkMode: () => dispatch({ type: 'TOGGLE_DARK_MODE' }),
+      toggleWorkMode: () => dispatch({ type: 'TOGGLE_WORK_MODE' })
     }}>
       {children}
     </AppContext.Provider>

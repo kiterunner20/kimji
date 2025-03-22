@@ -1093,8 +1093,12 @@ const TaskManager = () => {
       dispatch({
         type: 'ADD_CUSTOM_TASK',
         payload: {
-          day: state.currentDay,
-          task: newTask
+          day: selectedDay,
+          title: taskTitle,
+          description: taskDescription,
+          taskCategory: taskCategory,
+          category: taskFormData.category,
+          points: 10
         }
       });
     }
@@ -1237,6 +1241,14 @@ const TaskManager = () => {
   // Rendering the task list with error handling
   const renderCategoryTaskList = () => {
     try {
+      // Get the current mode from context
+      const { workMode } = useAppContext();
+      
+      // Get all categories to display based on the mode
+      const displayCategories = workMode 
+        ? ['personal_growth', 'mental_fitness'] // Show only work-related categories in work mode
+        : ['personal_growth', 'emotional_health', 'mental_fitness', 'physical_health', 'relationships', 'social', 'financial', 'mindfulness'];
+      
       return (
         <div>
           <TaskFilters>
@@ -1246,30 +1258,78 @@ const TaskManager = () => {
             >
               <FaListUl /> All Tasks
             </FilterButton>
-            <FilterButton
-              active={selectedCategory === 'personal_growth'}
-              onClick={() => toggleCategory('personal_growth')}
-            >
-              <FaGraduationCap /> Personal Growth
-            </FilterButton>
-            <FilterButton
-              active={selectedCategory === 'emotional_health'}
-              onClick={() => toggleCategory('emotional_health')}
-            >
-              <FaHeartbeat /> Emotional Health
-            </FilterButton>
-            <FilterButton
-              active={selectedCategory === 'mental_fitness'}
-              onClick={() => toggleCategory('mental_fitness')}
-            >
-              <FaBrain /> Mental Fitness
-            </FilterButton>
-            <FilterButton
-              active={selectedCategory === 'physical_health'}
-              onClick={() => toggleCategory('physical_health')}
-            >
-              <FaHeartbeat /> Physical Health
-            </FilterButton>
+            
+            {displayCategories.includes('personal_growth') && (
+              <FilterButton
+                active={selectedCategory === 'personal_growth'}
+                onClick={() => toggleCategory('personal_growth')}
+              >
+                <FaGraduationCap /> Personal Growth
+              </FilterButton>
+            )}
+            
+            {displayCategories.includes('emotional_health') && (
+              <FilterButton
+                active={selectedCategory === 'emotional_health'}
+                onClick={() => toggleCategory('emotional_health')}
+              >
+                <FaHeartbeat /> Emotional Health
+              </FilterButton>
+            )}
+            
+            {displayCategories.includes('mental_fitness') && (
+              <FilterButton
+                active={selectedCategory === 'mental_fitness'}
+                onClick={() => toggleCategory('mental_fitness')}
+              >
+                <FaBrain /> Mental Fitness
+              </FilterButton>
+            )}
+            
+            {displayCategories.includes('physical_health') && (
+              <FilterButton
+                active={selectedCategory === 'physical_health'}
+                onClick={() => toggleCategory('physical_health')}
+              >
+                <FaHeartbeat /> Physical Health
+              </FilterButton>
+            )}
+            
+            {displayCategories.includes('relationships') && (
+              <FilterButton
+                active={selectedCategory === 'relationships'}
+                onClick={() => toggleCategory('relationships')}
+              >
+                <FaUsers /> Relationships
+              </FilterButton>
+            )}
+            
+            {displayCategories.includes('social') && (
+              <FilterButton
+                active={selectedCategory === 'social'}
+                onClick={() => toggleCategory('social')}
+              >
+                <FaGlassCheers /> Social
+              </FilterButton>
+            )}
+            
+            {displayCategories.includes('financial') && (
+              <FilterButton
+                active={selectedCategory === 'financial'}
+                onClick={() => toggleCategory('financial')}
+              >
+                <FaMoneyBillWave /> Financial
+              </FilterButton>
+            )}
+            
+            {displayCategories.includes('mindfulness') && (
+              <FilterButton
+                active={selectedCategory === 'mindfulness'}
+                onClick={() => toggleCategory('mindfulness')}
+              >
+                <FaPrayingHands /> Mindfulness
+              </FilterButton>
+            )}
           </TaskFilters>
           
           {selectedCategory === 'all' ? (
@@ -1375,12 +1435,11 @@ const TaskManager = () => {
                     type: 'ADD_CUSTOM_TASK',
                     payload: {
                       day: selectedDay,
-                      task: {
-                        ...taskFormData,
-                        id: `custom_${Date.now()}`,
-                        completed: false,
-                        points: 10
-                      }
+                      title: taskFormData.title,
+                      description: taskFormData.description,
+                      taskCategory: taskFormData.taskCategory,
+                      category: taskFormData.category,
+                      points: 10
                     }
                   });
                 }
@@ -1449,6 +1508,42 @@ const TaskManager = () => {
                       <FaHeartbeat />
                     </CategoryIcon>
                     <span style={{marginLeft: '8px'}}>Physical Health</span>
+                  </CategoryOption>
+                  <CategoryOption
+                    selected={taskFormData.taskCategory === 'relationships'}
+                    onClick={() => setTaskFormData({...taskFormData, taskCategory: 'relationships'})}
+                  >
+                    <CategoryIcon iconBgColor="#3B82F6">
+                      <FaUsers />
+                    </CategoryIcon>
+                    <span style={{marginLeft: '8px'}}>Relationships</span>
+                  </CategoryOption>
+                  <CategoryOption
+                    selected={taskFormData.taskCategory === 'social'}
+                    onClick={() => setTaskFormData({...taskFormData, taskCategory: 'social'})}
+                  >
+                    <CategoryIcon iconBgColor="#0EA5E9">
+                      <FaGlassCheers />
+                    </CategoryIcon>
+                    <span style={{marginLeft: '8px'}}>Social</span>
+                  </CategoryOption>
+                  <CategoryOption
+                    selected={taskFormData.taskCategory === 'financial'}
+                    onClick={() => setTaskFormData({...taskFormData, taskCategory: 'financial'})}
+                  >
+                    <CategoryIcon iconBgColor="#F59E0B">
+                      <FaMoneyBillWave />
+                    </CategoryIcon>
+                    <span style={{marginLeft: '8px'}}>Financial</span>
+                  </CategoryOption>
+                  <CategoryOption
+                    selected={taskFormData.taskCategory === 'mindfulness'}
+                    onClick={() => setTaskFormData({...taskFormData, taskCategory: 'mindfulness'})}
+                  >
+                    <CategoryIcon iconBgColor="#7C3AED">
+                      <FaPrayingHands />
+                    </CategoryIcon>
+                    <span style={{marginLeft: '8px'}}>Mindfulness</span>
                   </CategoryOption>
                 </CategorySelect>
               </FormGroup>

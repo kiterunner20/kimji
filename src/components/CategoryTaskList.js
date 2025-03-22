@@ -1112,7 +1112,31 @@ const CategoryTaskList = ({ selectedDay }) => {
     
     const tasksByCategory = {};
     
-    dayData.tasks.forEach(task => {
+    // First filter tasks based on work mode
+    const { workMode } = context || {};
+    let filteredTasks = dayData.tasks;
+    
+    if (workMode) {
+      // In work mode, only show productivity and personal growth related tasks
+      filteredTasks = dayData.tasks.filter(task => {
+        // Include tasks from specific categories
+        if (task.taskCategory === 'personal_growth' || task.taskCategory === 'mental_fitness') {
+          return true;
+        }
+        
+        // Include tasks with productivity-related keywords
+        const taskTitle = (task.title || '').toLowerCase();
+        const taskDesc = (task.description || '').toLowerCase();
+        const productivityKeywords = ['work', 'productivity', 'goal', 'focus', 'learn', 'skill', 'read', 'study'];
+        
+        return productivityKeywords.some(keyword => 
+          taskTitle.includes(keyword) || taskDesc.includes(keyword)
+        );
+      });
+    }
+    
+    // Group filtered tasks by category
+    filteredTasks.forEach(task => {
       if (!task) return;
       
       const category = task.taskCategory || 'uncategorized';
