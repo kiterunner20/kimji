@@ -1,0 +1,52 @@
+name: Auto-generate PR Description
+
+on:
+  pull_request:
+    branches: 
+      - main
+    types: [opened, synchronize, reopened, edited]
+
+jobs:
+  generate-pr-description:
+    runs-on: ubuntu-latest
+    # Only run if the PR description is empty or just contains the template
+    if: github.event.pull_request.body == '' || contains(github.event.pull_request.body, '<!-- Add any relevant screenshots or videos here -->')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # To fetch all history for all branches and tags
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Generate PR Description
+        id: generate-description
+        run: |
+          node scripts/generate-pr-description.js main > PR_DESCRIPTION.md
+          echo "PR_DESCRIPTION<<EOF" >> $GITHUB_OUTPUT
+          cat PR_DESCRIPTION.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Update PR Description
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prDescription = `${{ steps.generate-description.outputs.PR_DESCRIPTION }}`;
+            
+            await github.rest.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+              body: prDescription
+            });
+            
+            console.log('PR description updated successfully!'); 
