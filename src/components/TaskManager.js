@@ -918,11 +918,17 @@ const formatTime = (time) => {
   return time;
 };
 
-const TaskManager = () => {
-  const context = useAppContext();
+const TaskManager = ({ selectedDay: propSelectedDay }) => {
+  const { currentDay, weekPlan, dispatch } = useAppContext();
   
-  // Move all hooks to the top level, before any conditionals
-  const [selectedDay, setSelectedDay] = useState(context?.state?.currentDay || 1);
+  // IMPORTANT CHANGE: Use propSelectedDay as the source of truth if provided, otherwise fall back to currentDay
+  // Only initialize the state once, then let it be controlled by props
+  const [selectedDay, setSelectedDay] = useState(propSelectedDay !== undefined ? propSelectedDay : currentDay || 1);
+  
+  // Track if we're in a controlled or uncontrolled mode (based on whether propSelectedDay is provided)
+  const isControlled = propSelectedDay !== undefined;
+  
+  // Keep rest of the state declarations
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [taskFormData, setTaskFormData] = useState({
@@ -959,36 +965,70 @@ const TaskManager = () => {
   const [menuOpenTaskId, setMenuOpenTaskId] = useState(null);
   const menuRef = useRef(null);
   
-  // Update selectedDay when currentDay changes in the app context
+  // Keep a counter to force re-renders when needed
+  const [updateCounter, setUpdateCounter] = useState(0);
+  
+  // Process selectedDay changes (from props)
   useEffect(() => {
-    if (context?.state?.currentDay) {
-      setSelectedDay(context.state.currentDay);
+    console.log('--------TaskManager selectedDay Change Logic---------');
+    console.log('TaskManager: propSelectedDay =', propSelectedDay);
+    console.log('TaskManager: currentDay from context =', currentDay);
+    console.log('TaskManager: current selectedDay state =', selectedDay);
+
+    // If we're in controlled mode (receiving selectedDay as prop), always use that
+    if (isControlled && propSelectedDay !== selectedDay) {
+      console.log('TaskManager: Controlled mode - updating to prop value:', propSelectedDay);
+      setSelectedDay(propSelectedDay);
+    } 
+    // Only update from context if we're not controlled by props
+    else if (!isControlled && currentDay !== selectedDay) {
+      console.log('TaskManager: Uncontrolled mode - updating from context:', currentDay);
+      setSelectedDay(currentDay);
     }
-  }, [context?.state?.currentDay]);
+    
+    console.log('--------------------------------');
+  }, [propSelectedDay, currentDay, isControlled]);
+  
+  // This effect runs whenever selectedDay actually changes
+  useEffect(() => {
+    console.log('TaskManager: selectedDay state changed to', selectedDay);
+    
+    // Reset UI state that depends on the selected day
+    setExpandedTasks([]);
+    setActiveTaskDetails(null);
+    setActiveTaskMenu(null);
+    setExpandedTaskId(null);
+    
+    // Force a re-render to make sure we get the latest tasks
+    setUpdateCounter(prev => prev + 1);
+  }, [selectedDay]);
   
   // Initialize expanded categories
   useEffect(() => {
     // If there are tasks, get unique categories and initialize expandedCategories state
-    if (context?.state?.weekPlan && context.state.weekPlan.find(d => d?.day === context.state?.currentDay)) {
-      const dayPlan = context.state.weekPlan.find(d => d?.day === context.state?.currentDay);
+    if (weekPlan && Array.isArray(weekPlan)) {
+      const dayPlan = weekPlan.find(d => d?.day === selectedDay);
       if (dayPlan && dayPlan.tasks) {
+        console.log('Found dayPlan for selectedDay', selectedDay, 'with', dayPlan.tasks.length, 'tasks');
         const tasks = dayPlan.tasks;
         const categories = [...new Set(tasks.map(task => task?.taskCategory).filter(Boolean))];
         const initialExpanded = {};
         categories.forEach(category => {
-          initialExpanded[category] = false; // Default to collapsed
+          initialExpanded[category] = true; // Default to expanded for better visibility
         });
         setExpandedCategories(initialExpanded);
+      } else {
+        console.log('No dayPlan found for selectedDay', selectedDay);
       }
     }
-  }, [context?.state?.weekPlan, context?.state?.currentDay]);
+  }, [weekPlan, selectedDay]);
   
   // Add debugging log
   useEffect(() => {
-    if (context?.state?.weekPlan) {
-      console.log('Current weekPlan:', context.state.weekPlan);
-      console.log('Current day:', context.state?.currentDay);
-      const dayPlan = context.state.weekPlan.find(d => d?.day === context.state?.currentDay);
+    if (weekPlan && Array.isArray(weekPlan)) {
+      console.log('Current weekPlan:', weekPlan);
+      console.log('Current day:', currentDay);
+      const dayPlan = weekPlan.find(d => d?.day === currentDay);
       console.log('Current dayPlan:', dayPlan);
       if (dayPlan && dayPlan.tasks) {
         console.log('Tasks for current day:', dayPlan.tasks);
@@ -996,7 +1036,7 @@ const TaskManager = () => {
     } else {
       console.log('weekPlan is undefined or not an array in TaskManager');
     }
-  }, [context?.state?.weekPlan, context?.state?.currentDay]);
+  }, [weekPlan, currentDay]);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -1013,7 +1053,7 @@ const TaskManager = () => {
   }, []);
   
   // Handle the case where context might be undefined initially
-  if (!context) {
+  if (!currentDay) {
     return (
       <div style={{
         padding: '20px',
@@ -1029,15 +1069,21 @@ const TaskManager = () => {
     );
   }
   
-  const { state, dispatch } = context;
-
   const handleCheckboxClick = (e, taskId, completed) => {
     e.stopPropagation();
+    
+    // Store current expanded state
+    const currentExpanded = {...expandedCategories};
     
     dispatch({
       type: 'TOGGLE_TASK_COMPLETE',
       payload: { dayNumber: selectedDay, taskId, completed: !completed }
     });
+    
+    // Ensure expanded categories remain open
+    setTimeout(() => {
+      setExpandedCategories(currentExpanded);
+    }, 0);
   };
 
   const toggleCategory = (category) => {
@@ -1143,12 +1189,12 @@ const TaskManager = () => {
   };
 
   const getTasksByCategory = () => {
-    if (!state || !state.weekPlan) {
+    if (!weekPlan || !weekPlan.find(d => d?.day === selectedDay)) {
       console.log('No state or weekPlan available');
       return {};
     }
     
-    const dayPlan = state.weekPlan.find(d => d.day === selectedDay);
+    const dayPlan = weekPlan.find(d => d.day === selectedDay);
     if (!dayPlan || !dayPlan.tasks) {
       console.log(`No dayPlan or tasks found for day: ${selectedDay}`);
       return {};
@@ -1241,13 +1287,25 @@ const TaskManager = () => {
   // Rendering the task list with error handling
   const renderCategoryTaskList = () => {
     try {
-      // Get the current mode from context
-      const { workMode } = useAppContext();
+      // Log important debugging information
+      console.log('renderCategoryTaskList using selectedDay:', selectedDay);
+      console.log('tasksByCategory:', getTasksByCategory());
       
-      // Get all categories to display based on the mode
-      const displayCategories = workMode 
-        ? ['personal_growth', 'mental_fitness'] // Show only work-related categories in work mode
-        : ['personal_growth', 'emotional_health', 'mental_fitness', 'physical_health', 'relationships', 'social', 'financial', 'mindfulness'];
+      // Find the day plan for the selected day
+      const dayPlan = weekPlan?.find(d => d?.day === selectedDay);
+      console.log('dayPlan found for selectedDay', selectedDay, ':', dayPlan);
+      
+      // Get all categories to display
+      const displayCategories = [
+        'personal_growth', 
+        'emotional_health', 
+        'mental_fitness', 
+        'physical_health', 
+        'relationships', 
+        'social', 
+        'financial', 
+        'mindfulness'
+      ];
       
       return (
         <div>
