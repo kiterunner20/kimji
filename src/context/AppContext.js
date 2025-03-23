@@ -388,6 +388,7 @@ function reducer(state, action) {
     case 'ADD_CUSTOM_TASK': {
       // Get the day to add this task to
       const customDay = action.payload.day || state.currentDay;
+      const repeatForAllDays = action.payload.repeatForAllDays || false;
       
       // Create a proper task ID that includes the day
       const customTaskCategory = action.payload.taskCategory || 'custom';
@@ -409,23 +410,60 @@ function reducer(state, action) {
       
       // Add to custom tasks list
       const updatedCustomTasks = [...state.customTasks, customTask];
+
+      let weekPlanWithCustomTask;
       
-      // Only add to the specific day in the week plan
-      const weekPlanWithCustomTask = state.weekPlan.map(day => {
-        if (day.day === customDay) {
-          return {
-            ...day,
-            tasks: [...day.tasks, customTask]
-          };
-        }
-        return day;
-      });
-      
-      return { 
-        ...state, 
-        customTasks: updatedCustomTasks,
-        weekPlan: weekPlanWithCustomTask
-      };
+      if (repeatForAllDays) {
+        // Add the task to all 21 days (or remaining days from the current day)
+        const allCustomTasks = [];
+        
+        weekPlanWithCustomTask = state.weekPlan.map(day => {
+          // Only add to days >= the selected day (don't add to past days)
+          if (day.day >= customDay) {
+            // Create a new task ID specific to this day
+            const daySpecificTaskId = createTaskId(day.day, customTaskCategory, taskName + '_' + Date.now().toString(36));
+            
+            const daySpecificTask = {
+              ...customTask,
+              id: daySpecificTaskId,
+              day: day.day
+            };
+            
+            // Add to our collection of all custom tasks
+            allCustomTasks.push(daySpecificTask);
+            
+            return {
+              ...day,
+              tasks: [...day.tasks, daySpecificTask]
+            };
+          }
+          return day;
+        });
+        
+        // Update custom tasks list with all the new tasks
+        return { 
+          ...state, 
+          customTasks: [...state.customTasks, ...allCustomTasks],
+          weekPlan: weekPlanWithCustomTask
+        };
+      } else {
+        // Only add to the specific day in the week plan (original behavior)
+        weekPlanWithCustomTask = state.weekPlan.map(day => {
+          if (day.day === customDay) {
+            return {
+              ...day,
+              tasks: [...day.tasks, customTask]
+            };
+          }
+          return day;
+        });
+        
+        return { 
+          ...state, 
+          customTasks: updatedCustomTasks,
+          weekPlan: weekPlanWithCustomTask
+        };
+      }
     }
     
     case 'DELETE_TASK': {

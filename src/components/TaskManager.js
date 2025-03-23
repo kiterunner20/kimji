@@ -863,6 +863,29 @@ const TimeOption = styled.div`
   }
 `;
 
+const TaskOption = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border: 1px solid ${props => props.selected ? 'var(--primary)' : '#ddd'};
+  border-radius: 8px;
+  cursor: pointer;
+  background-color: ${props => props.selected ? 'rgba(99, 102, 241, 0.1)' : 'transparent'};
+  
+  &:hover {
+    background-color: ${props => props.selected ? 'rgba(99, 102, 241, 0.15)' : 'rgba(0,0,0,0.03)'};
+  }
+  
+  .dark-mode & {
+    border-color: ${props => props.selected ? 'var(--primary)' : 'var(--gray-600)'};
+    background-color: ${props => props.selected ? 'rgba(99, 102, 241, 0.2)' : 'transparent'};
+    
+    &:hover {
+      background-color: ${props => props.selected ? 'rgba(99, 102, 241, 0.25)' : 'rgba(255,255,255,0.05)'};
+    }
+  }
+`;
+
 const FormActions = styled.div`
   display: flex;
   justify-content: flex-end;
@@ -938,7 +961,8 @@ const TaskManager = ({ selectedDay: propSelectedDay }) => {
     taskCategory: 'personal_growth',
     type: 'custom',
     hasReminder: false,
-    time: ''
+    time: '',
+    repeatForAllDays: false
   });
   const [expandedTasks, setExpandedTasks] = useState([]);
   const [activeTaskDetails, setActiveTaskDetails] = useState(null);
@@ -1108,7 +1132,8 @@ const TaskManager = ({ selectedDay: propSelectedDay }) => {
       taskCategory: 'personal_growth',
       type: 'custom',
       hasReminder: false,
-      time: ''
+      time: '',
+      repeatForAllDays: false
     });
   };
 
@@ -1144,7 +1169,8 @@ const TaskManager = ({ selectedDay: propSelectedDay }) => {
           description: taskDescription,
           taskCategory: taskCategory,
           category: taskFormData.category,
-          points: 10
+          points: 10,
+          repeatForAllDays: false
         }
       });
     }
@@ -1497,7 +1523,8 @@ const TaskManager = ({ selectedDay: propSelectedDay }) => {
                       description: taskFormData.description,
                       taskCategory: taskFormData.taskCategory,
                       category: taskFormData.category,
-                      points: 10
+                      points: 10,
+                      repeatForAllDays: taskFormData.repeatForAllDays
                     }
                   });
                 }
@@ -1628,6 +1655,38 @@ const TaskManager = ({ selectedDay: propSelectedDay }) => {
                     Evening
                   </TimeOption>
                 </TimeOfDaySelect>
+              </FormGroup>
+              
+              <FormGroup>
+                <FormLabel>Task Duration</FormLabel>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <TaskOption 
+                    selected={!taskFormData.repeatForAllDays}
+                    onClick={() => setTaskFormData({...taskFormData, repeatForAllDays: false})}
+                  >
+                    <input 
+                      type="radio" 
+                      name="taskDuration" 
+                      checked={!taskFormData.repeatForAllDays}
+                      onChange={() => setTaskFormData({...taskFormData, repeatForAllDays: false})}
+                      style={{ marginRight: '8px' }}
+                    />
+                    Current day only
+                  </TaskOption>
+                  <TaskOption 
+                    selected={taskFormData.repeatForAllDays}
+                    onClick={() => setTaskFormData({...taskFormData, repeatForAllDays: true})}
+                  >
+                    <input 
+                      type="radio" 
+                      name="taskDuration" 
+                      checked={taskFormData.repeatForAllDays}
+                      onChange={() => setTaskFormData({...taskFormData, repeatForAllDays: true})}
+                      style={{ marginRight: '8px' }}
+                    />
+                    Repeat for all days (21 days)
+                  </TaskOption>
+                </div>
               </FormGroup>
               
               <FormActions>
