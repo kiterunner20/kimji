@@ -397,19 +397,46 @@ const LockedOverlay = styled.div`
   }
 `;
 
-const DaySelector = () => {
+const TestModeToggle = styled.div`
+  display: flex;
+  justify-content: center;
+  margin-top: var(--spacing-md);
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+  }
+`;
+
+const DaySelector = ({ onDaySelect }) => {
   const { currentDay, weekPlan = [], dispatch } = useAppContext();
   const [activeWeek, setActiveWeek] = useState(Math.ceil(currentDay / 7));
+  // Add a local state to track the selected day
+  const [selectedDayState, setSelectedDayState] = useState(currentDay);
+  // Add test mode state
+  const [testMode, setTestMode] = useState(false);
   
   // Log important state for debugging
   useEffect(() => {
     console.log("DaySelector component rendering with currentDay:", currentDay);
+    console.log("DaySelector component with selectedDayState:", selectedDayState);
     if (weekPlan) {
       console.log("WeekPlan exists with length:", weekPlan.length);
     } else {
       console.log("WeekPlan is null or undefined");
     }
-  }, [currentDay, activeWeek, weekPlan]);
+    
+    // Sync selectedDayState with currentDay from context
+    if (currentDay !== selectedDayState) {
+      setSelectedDayState(currentDay);
+    }
+  }, [currentDay, activeWeek, weekPlan, selectedDayState]);
 
   // Get an array of days for the active week
   const daysInWeek = 7;
@@ -444,14 +471,42 @@ const DaySelector = () => {
       return;
     }
     
-    console.log(`Button clicked for day ${day}`);
+    console.log(`DaySelector: Button clicked for day ${day}`);
     
-    if (dispatch) {
-      console.log(`Dispatching SET_DAY action with payload: ${day}`);
+    // Check if weekPlan exists
+    if (!Array.isArray(weekPlan)) {
+      console.error('weekPlan is not an array:', weekPlan);
+      return;
+    }
+    
+    // Check if the day exists in weekPlan
+    const dayPlan = weekPlan.find(d => d && d.day === day);
+    if (!dayPlan) {
+      console.error(`No day plan found for day ${day}`);
+      return;
+    }
+    
+    console.log(`DaySelector: Selected day ${day}: ${dayPlan.title}`);
+    console.log(`DaySelector: Tasks for day ${day}:`, dayPlan.tasks?.length);
+    
+    // Update the local state immediately for UI feedback
+    setSelectedDayState(day);
+    
+    // If onDaySelect prop exists, call it directly
+    if (typeof onDaySelect === 'function') {
+      console.log(`DaySelector: Using onDaySelect prop callback for day ${day}`);
+      onDaySelect(day);
+    }
+    // Otherwise fall back to using dispatch directly (backward compatibility)
+    else if (dispatch) {
+      console.log(`DaySelector: Dispatching SET_DAY action with payload: ${day}`);
       dispatch({ type: 'SET_DAY', payload: day });
       setActiveWeek(Math.ceil(day / 7));
+      
+      // After dispatching, log the current day
+      console.log(`DaySelector: Day selection complete. Day ${day} selected.`);
     } else {
-      console.error('Dispatch function not available');
+      console.error('Neither onDaySelect prop nor dispatch function is available');
     }
   };
 
@@ -698,6 +753,11 @@ const DaySelector = () => {
 
   // Determine if a day is locked (future day that can't be accessed yet)
   const isDayLocked = (day) => {
+    // In test mode, all days are unlocked
+    if (testMode) {
+      return false;
+    }
+    // In regular mode, only current and previous days are unlocked
     return day > currentDay;
   };
 
@@ -746,7 +806,19 @@ const DaySelector = () => {
       </WeekTabsContainer>
       
       <OverallProgress percent={overallProgress}>
-        <ProgressLabel>Overall Progress: {overallProgress}%</ProgressLabel>
+        <ProgressLabel>
+          Overall Progress: {Math.round(overallProgress)}%
+          <TestModeToggle>
+            <label>
+              <input
+                type="checkbox"
+                checked={testMode}
+                onChange={() => setTestMode(!testMode)}
+              />
+              Test Mode {testMode ? '(All Days Unlocked)' : '(Normal Mode)'}
+            </label>
+          </TestModeToggle>
+        </ProgressLabel>
         <ProgressBarContainer>
           <ProgressBar percent={overallProgress} />
         </ProgressBarContainer>
@@ -759,7 +831,8 @@ const DaySelector = () => {
         
         <DaysContainer ref={daysContainerRef}>
           {daysToShow.map((day, index) => {
-            const isActive = day === currentDay;
+            // Use the local state for determining active status
+            const isActive = day === selectedDayState;
             const isCompleted = getDayCompletionStatus(day);
             const isLocked = isDayLocked(day);
             

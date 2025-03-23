@@ -1076,23 +1076,65 @@ const Home = () => {
     profile, 
     calculateDayScore, 
     taskCategories,
-    getTasksByCategory
+    getTasksByCategory,
+    dispatch
   } = useAppContext();
   
   const [dayScore, setDayScore] = useState({ score: 0, total: 0, percentage: 0 });
+  // Track the selected day
+  const [selectedDay, setSelectedDay] = useState(currentDay || 1);
+  
+  // Handler for day selection
+  const handleDaySelect = (day) => {
+    console.log("Home: handleDaySelect called with day", day);
+    
+    // First update our local state
+    setSelectedDay(day);
+    
+    // Then update the global context
+    dispatch({ type: 'SET_DAY', payload: day });
+  };
   
   // Log important state for debugging
   useEffect(() => {
-    console.log("Home component rendered with currentDay:", currentDay);
-    if (weekPlan) {
-      console.log("weekPlan in Home exists with length:", weekPlan.length);
+    console.log("======== Home Component Debug ========");
+    console.log("Home: currentDay from context =", currentDay);
+    console.log("Home: selectedDay state =", selectedDay);
+    
+    // Only update selectedDay from context when component initially mounts
+    // This prevents the circular dependency when DaySelector updates currentDay
+    if (currentDay !== undefined && currentDay !== selectedDay) {
+      const isInitialLoad = !selectedDay; // Only sync on initial load
+      console.log("Home: Update from currentDay?", isInitialLoad);
+      
+      if (isInitialLoad) {
+        console.log("Home: Updating selectedDay to match currentDay on initial load:", currentDay);
+        setSelectedDay(currentDay);
+      } else {
+        console.log("Home: Maintaining selectedDay from user selection:", selectedDay);
+      }
     } else {
-      console.log("weekPlan in Home is null or undefined");
+      console.log("Home: No need to update selectedDay, currentDay =", currentDay, "selectedDay =", selectedDay);
     }
-  }, [currentDay, weekPlan]);
+    
+    // Display weekPlan information
+    if (weekPlan && Array.isArray(weekPlan)) {
+      console.log("Home: weekPlan exists with", weekPlan.length, "days");
+      
+      // Check if we can find both days in weekPlan
+      const currentDayPlan = weekPlan.find(d => d?.day === currentDay);
+      const selectedDayPlan = weekPlan.find(d => d?.day === selectedDay);
+      
+      console.log("Home: currentDay plan found?", !!currentDayPlan, currentDayPlan ? `(title: ${currentDayPlan.title})` : "");
+      console.log("Home: selectedDay plan found?", !!selectedDayPlan, selectedDayPlan ? `(title: ${selectedDayPlan.title})` : "");
+    } else {
+      console.log("Home: weekPlan is null or undefined");
+    }
+    console.log("======================================");
+  }, [currentDay, weekPlan, selectedDay]);
   
   // Get the current day plan
-  const dayPlan = weekPlan?.find(d => d?.day === currentDay) || null;
+  const dayPlan = weekPlan?.find(d => d?.day === selectedDay) || null;
   
   // Log the found dayPlan
   useEffect(() => {
@@ -1100,9 +1142,9 @@ const Home = () => {
     if (dayPlan) {
       console.log("Tasks in dayPlan:", dayPlan.tasks?.length || 0);
     } else {
-      console.log("No dayPlan found for day", currentDay);
+      console.log("No dayPlan found for day", selectedDay);
     }
-  }, [dayPlan, currentDay]);
+  }, [dayPlan, selectedDay]);
   
   // Calculate the score whenever currentDay or weekPlan changes
   useEffect(() => {
@@ -1113,7 +1155,7 @@ const Home = () => {
       // Set default score if dayPlan is not available
       setDayScore({ score: 0, total: 0, percentage: 0 });
     }
-  }, [currentDay, weekPlan, calculateDayScore, dayPlan]);
+  }, [selectedDay, weekPlan, calculateDayScore, dayPlan]);
   
   // Get motivational quote based on the current day
   const getQuote = () => {
@@ -1142,24 +1184,24 @@ const Home = () => {
     ];
     
     // Use the current day as an index, rotating through the quotes
-    return quotes[(currentDay - 1) % quotes.length];
+    return quotes[(selectedDay - 1) % quotes.length];
   };
   
   // Get the milestone message for specific days
   const getMilestone = () => {
-    if (currentDay === 7) {
+    if (selectedDay === 7) {
       return {
         title: "Week 1 Complete!",
         description: "Congratulations on completing the first week! You've laid a solid foundation for your transformation.",
         icon: <FaTrophy />
       };
-    } else if (currentDay === 14) {
+    } else if (selectedDay === 14) {
       return {
         title: "Week 2 Complete!",
         description: "You're two-thirds of the way through! Your dedication is creating lasting change.",
         icon: <FaTrophy />
       };
-    } else if (currentDay === 21) {
+    } else if (selectedDay === 21) {
       return {
         title: "21-Day Challenge Complete!",
         description: "Incredible! You've completed the full 21-day transformation journey. Take time to reflect on how far you've come.",
@@ -1172,7 +1214,7 @@ const Home = () => {
   
   // Get week number (1, 2, or 3)
   const getCurrentWeek = () => {
-    return Math.ceil(currentDay / 7);
+    return Math.ceil(selectedDay / 7);
   };
   
   // Get week theme
@@ -1197,7 +1239,7 @@ const Home = () => {
     return (
       <EmptyStateWrapper>
         <FaCalendarAlt />
-        <h3>No Tasks for Day {currentDay}</h3>
+        <h3>No Tasks for Day {selectedDay}</h3>
         <p>There are no tasks planned for today. You can add custom tasks or select a different day.</p>
       </EmptyStateWrapper>
     );
@@ -1210,13 +1252,13 @@ const Home = () => {
           {profile.name ? `Hello, ${profile.name}!` : 'Welcome to your transformation!'}
         </Greeting>
         <DayTitle>
-          <FaCalendarAlt /> Day {currentDay}: {dayPlan?.title || ''}
+          <FaCalendarAlt /> Day {selectedDay}: {dayPlan?.title || ''}
         </DayTitle>
         <Subheading>
           Week {getCurrentWeek()}: {weekTheme} - Build consistent habits in 21 days.
         </Subheading>
         
-        <DaySelector />
+        <DaySelector onDaySelect={handleDaySelect} />
         
         <ProgressBar>
           <ProgressFill percent={dayScore.percentage} />
@@ -1247,7 +1289,7 @@ const Home = () => {
       </QuoteCard>
       
       <TasksSection>
-        <TaskManager day={currentDay} />
+        <TaskManager selectedDay={selectedDay} />
       </TasksSection>
       
       {renderEmptyState()}

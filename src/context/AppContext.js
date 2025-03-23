@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useReducer } from 'react';
 import localforage from 'localforage';
 import { v4 as uuidv4 } from 'uuid';
+import { generateCustomTaskData } from '../data/transformData';
 
 // Helper to create unique task ID with day prefix
 const createTaskId = (day, category, name) => {
@@ -45,308 +46,17 @@ const defaultReminderTimes = {
 
 // Initial template for our 21-day program with transformative tasks
 const generateWeekTemplate = () => {
-  console.log("Generating week template...");
+  console.log("Generating week template from custom data...");
   
-  const weekPlan = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21].map(day => {
-    const dayPlan = {
-      day: day,
-      title: getDayTitle(day),
-      tasks: [
-        // Personal Growth category
-        {
-          id: createTaskId(day, taskCategories.PERSONAL_GROWTH, 'learn_skill'),
-          title: "Learn New Skill",
-          description: "Spend 15 minutes learning a new skill",
-          completed: false,
-          type: "learning",
-          category: "morning",
-          taskCategory: taskCategories.PERSONAL_GROWTH,
-          points: categoryPoints[taskCategories.PERSONAL_GROWTH],
-          reminder: null
-        },
-        {
-          id: createTaskId(day, taskCategories.PERSONAL_GROWTH, 'journal_improvements'),
-          title: "Journal Improvements",
-          description: "Write 3 things you improved today in a journal",
-          completed: false,
-          type: "reflection",
-          category: "evening",
-          taskCategory: taskCategories.PERSONAL_GROWTH,
-          points: categoryPoints[taskCategories.PERSONAL_GROWTH],
-          reminder: null
-        },
-        {
-          id: createTaskId(day, taskCategories.PERSONAL_GROWTH, 'motivational_content'),
-          title: "Motivational Content",
-          description: "Listen to a motivational podcast/episode",
-          completed: false,
-          type: "learning",
-          category: "morning",
-          taskCategory: taskCategories.PERSONAL_GROWTH,
-          points: categoryPoints[taskCategories.PERSONAL_GROWTH],
-          reminder: null
-        },
-        
-        // Emotional Health category
-        {
-          id: createTaskId(day, taskCategories.EMOTIONAL_HEALTH, 'gratitude_reflection'),
-          title: "Gratitude Reflection",
-          description: "5-minute gratitude reflection (write or verbalize)",
-          completed: false,
-          type: "gratitude",
-          entries: [],
-          category: "morning",
-          taskCategory: taskCategories.EMOTIONAL_HEALTH,
-          points: categoryPoints[taskCategories.EMOTIONAL_HEALTH],
-          reminder: null
-        },
-        {
-          id: createTaskId(day, taskCategories.EMOTIONAL_HEALTH, 'box_breathing'),
-          title: "Box Breathing",
-          description: "Practice 'box breathing' (4-4-4-4) when stressed",
-          completed: false,
-          type: "meditation",
-          category: "afternoon",
-          taskCategory: taskCategories.EMOTIONAL_HEALTH,
-          points: categoryPoints[taskCategories.EMOTIONAL_HEALTH],
-          reminder: null
-        },
-        {
-          id: createTaskId(day, taskCategories.EMOTIONAL_HEALTH, 'forgive_annoyance'),
-          title: "Forgive Annoyance",
-          description: "Forgive one small annoyance from today",
-          completed: false,
-          type: "kindness",
-          category: "evening",
-          taskCategory: taskCategories.EMOTIONAL_HEALTH,
-          points: categoryPoints[taskCategories.EMOTIONAL_HEALTH],
-          reminder: null
-        },
-        
-        // Mental Fitness category
-        {
-          id: createTaskId(day, taskCategories.MENTAL_FITNESS, 'read_nonfiction'),
-          title: "Read Non-Fiction",
-          description: "Read 10 pages of a non-fiction book",
-          completed: false,
-          type: "learning",
-          category: "evening",
-          taskCategory: taskCategories.MENTAL_FITNESS,
-          points: categoryPoints[taskCategories.MENTAL_FITNESS],
-          reminder: null
-        },
-        {
-          id: createTaskId(day, taskCategories.MENTAL_FITNESS, 'solve_puzzle'),
-          title: "Solve a Puzzle",
-          description: "Solve a brain teaser/puzzle",
-          completed: false,
-          type: "productivity",
-          category: "afternoon",
-          taskCategory: taskCategories.MENTAL_FITNESS,
-          points: categoryPoints[taskCategories.MENTAL_FITNESS],
-          reminder: null
-        },
-        {
-          id: createTaskId(day, taskCategories.MENTAL_FITNESS, 'creative_ideas'),
-          title: "Creative Ideas",
-          description: "Write down 3 creative ideas",
-          completed: false,
-          type: "creativity",
-          category: "morning",
-          taskCategory: taskCategories.MENTAL_FITNESS,
-          points: categoryPoints[taskCategories.MENTAL_FITNESS],
-          reminder: null
-        },
-        
-        // Physical Health category
-        {
-          id: createTaskId(day, taskCategories.PHYSICAL_HEALTH, 'dynamic_stretching'),
-          title: "Dynamic Stretching",
-          description: "Do 5 minutes of dynamic stretching",
-          completed: false,
-          type: "workout",
-          duration: 0,
-          category: "morning",
-          taskCategory: taskCategories.PHYSICAL_HEALTH,
-          points: categoryPoints[taskCategories.PHYSICAL_HEALTH],
-          reminder: null
-        },
-        {
-          id: createTaskId(day, taskCategories.PHYSICAL_HEALTH, 'nature_walk'),
-          title: "Nature Walk",
-          description: "Take a 10-minute walk in nature",
-          completed: false,
-          type: "workout",
-          duration: 0,
-          category: "afternoon",
-          taskCategory: taskCategories.PHYSICAL_HEALTH,
-          points: categoryPoints[taskCategories.PHYSICAL_HEALTH],
-          reminder: null
-        },
-        {
-          id: createTaskId(day, taskCategories.PHYSICAL_HEALTH, 'water_intake'),
-          title: "Drink Water",
-          description: "Drink 8 glasses of water (track with counter)",
-          completed: false,
-          type: "hydration",
-          count: 0,
-          target: 8,
-          category: "all-day",
-          taskCategory: taskCategories.PHYSICAL_HEALTH,
-          points: categoryPoints[taskCategories.PHYSICAL_HEALTH],
-          reminder: null
-        },
-        
-        // Relationships category
-        {
-          id: createTaskId(day, taskCategories.RELATIONSHIPS, 'meaningful_conversation'),
-          title: "Meaningful Conversation",
-          description: "Have 1 meaningful conversation with a loved one",
-          completed: false,
-          type: "connection",
-          category: "evening",
-          taskCategory: taskCategories.RELATIONSHIPS,
-          points: categoryPoints[taskCategories.RELATIONSHIPS],
-          reminder: null
-        },
-        {
-          id: createTaskId(day, taskCategories.RELATIONSHIPS, 'give_compliments'),
-          title: "Give Compliments",
-          description: "Compliment 3 people genuinely",
-          completed: false,
-          type: "kindness",
-          category: "afternoon",
-          taskCategory: taskCategories.RELATIONSHIPS,
-          points: categoryPoints[taskCategories.RELATIONSHIPS],
-          reminder: null
-        },
-        {
-          id: createTaskId(day, taskCategories.RELATIONSHIPS, 'reconnect'),
-          title: "Reconnect",
-          description: "Message/Call someone you haven't spoken to recently",
-          completed: false,
-          type: "connection",
-          category: "evening",
-          taskCategory: taskCategories.RELATIONSHIPS,
-          points: categoryPoints[taskCategories.RELATIONSHIPS],
-          reminder: null
-        },
-        
-        // Social & Communication category
-        {
-          id: createTaskId(day, taskCategories.SOCIAL, 'active_listening'),
-          title: "Active Listening",
-          description: "Practice active listening in 1 conversation",
-          completed: false,
-          type: "communication",
-          category: "all-day",
-          taskCategory: taskCategories.SOCIAL,
-          points: categoryPoints[taskCategories.SOCIAL],
-          reminder: null
-        },
-        {
-          id: createTaskId(day, taskCategories.SOCIAL, 'share_information'),
-          title: "Share Helpful Info",
-          description: "Share helpful information with a colleague/friend",
-          completed: false,
-          type: "kindness",
-          category: "afternoon",
-          taskCategory: taskCategories.SOCIAL,
-          points: categoryPoints[taskCategories.SOCIAL],
-          reminder: null
-        },
-        {
-          id: createTaskId(day, taskCategories.SOCIAL, 'no_interrupting'),
-          title: "No Interrupting",
-          description: "Avoid interrupting others in discussions",
-          completed: false,
-          type: "communication",
-          category: "all-day",
-          taskCategory: taskCategories.SOCIAL,
-          points: categoryPoints[taskCategories.SOCIAL],
-          reminder: null
-        },
-        
-        // Financial Wellness category
-        {
-          id: createTaskId(day, taskCategories.FINANCIAL, 'review_expenses'),
-          title: "Review Expenses",
-          description: "Review daily expenses",
-          completed: false,
-          type: "expense",
-          entries: [],
-          category: "evening",
-          taskCategory: taskCategories.FINANCIAL,
-          points: categoryPoints[taskCategories.FINANCIAL],
-          reminder: null
-        },
-        {
-          id: createTaskId(day, taskCategories.FINANCIAL, 'save_money'),
-          title: "Save Money",
-          description: "Save $5 (or equivalent) in a 'growth fund'",
-          completed: false,
-          type: "saving",
-          category: "evening",
-          taskCategory: taskCategories.FINANCIAL,
-          points: categoryPoints[taskCategories.FINANCIAL],
-          reminder: null
-        },
-        {
-          id: createTaskId(day, taskCategories.FINANCIAL, 'financial_literacy'),
-          title: "Financial Literacy",
-          description: "Research one financial literacy concept",
-          completed: false,
-          type: "learning",
-          category: "afternoon",
-          taskCategory: taskCategories.FINANCIAL,
-          points: categoryPoints[taskCategories.FINANCIAL],
-          reminder: null
-        },
-        
-        // Spiritual/Mindfulness category
-        {
-          id: createTaskId(day, taskCategories.MINDFULNESS, 'morning_intention'),
-          title: "Morning Intention",
-          description: "Morning intention setting (write 1 goal)",
-          completed: false,
-          type: "planning",
-          category: "morning",
-          taskCategory: taskCategories.MINDFULNESS,
-          points: categoryPoints[taskCategories.MINDFULNESS],
-          reminder: null
-        },
-        {
-          id: createTaskId(day, taskCategories.MINDFULNESS, 'evening_reflection'),
-          title: "Evening Reflection",
-          description: "Evening reflection on daily actions",
-          completed: false,
-          type: "reflection",
-          category: "evening",
-          taskCategory: taskCategories.MINDFULNESS,
-          points: categoryPoints[taskCategories.MINDFULNESS],
-          reminder: null
-        },
-        {
-          id: createTaskId(day, taskCategories.MINDFULNESS, 'mindful_breathing'),
-          title: "Mindful Breathing",
-          description: "3-minute mindful breathing session",
-          completed: false,
-          type: "meditation",
-          category: "morning",
-          taskCategory: taskCategories.MINDFULNESS,
-          points: categoryPoints[taskCategories.MINDFULNESS],
-          reminder: null
-        }
-      ]
-    };
-    
-    return dayPlan;
-  });
+  // Get our custom data
+  const customTaskData = generateCustomTaskData();
+  console.log(`Generated week template with ${customTaskData.length} days`);
   
-  console.log(`Generated week template with ${weekPlan.length} days`);
-  console.log(`First day has ${weekPlan[0].tasks.length} tasks`);
+  if (customTaskData.length > 0) {
+    console.log(`First day has ${customTaskData[0].tasks.length} tasks`);
+  }
   
-  return weekPlan;
+  return customTaskData;
 };
 
 // Helper function to get day title
@@ -504,7 +214,7 @@ function reducer(state, action) {
       // Force a state change by creating a completely new state object
       const newWeekPlan = state.weekPlan ? [...state.weekPlan] : null;
       
-      return { 
+      const newState = { 
         ...state, 
         currentDay: newDay,
         // Force weekPlan to be a new reference to trigger re-renders 
@@ -512,6 +222,14 @@ function reducer(state, action) {
         // Add a timestamp to ensure state is always different
         lastUpdated: new Date().getTime()
       };
+      
+      console.log("AppContext: New state created:", { 
+        currentDay: newState.currentDay,
+        weekPlanLength: newState.weekPlan ? newState.weekPlan.length : 0
+      });
+      
+      // Return the new state object to trigger React context updates
+      return newState;
     
     case 'TOGGLE_TASK': {
       const { taskId } = action.payload;
@@ -935,25 +653,28 @@ export const AppProvider = ({ children }) => {
 
   // Initialize or load data from storage
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const savedData = await localforage.getItem('kimjiTransformData');
-        
-        if (savedData) {
-          console.log("Loaded saved data:", savedData);
-          dispatch({ type: 'INIT_DATA', payload: savedData });
-        } else {
-          // Initialize with default template if no saved data
-          console.log("No saved data found, initializing with default template");
-          resetAppData();
-        }
-      } catch (error) {
-        console.error("Error loading data:", error);
-        resetAppData();
-      }
+    const loadSavedData = async () => {
+      // Force a reset to use the latest data from transformData.js
+      await resetAppData();
+      return;
+      
+      // Original code below (commented out)
+      // try {
+      //   const savedData = await localforage.getItem('appData');
+      //   console.log('Loaded saved data:', savedData);
+      //   if (savedData) {
+      //     dispatch({ type: 'INITIALIZE', payload: savedData });
+      //   } else {
+      //     console.log('No saved data found, initializing with default template');
+      //     resetAppData();
+      //   }
+      // } catch (error) {
+      //   console.error('Error loading data:', error);
+      //   resetAppData();
+      // }
     };
 
-    loadData();
+    loadSavedData();
   }, []);
 
   // Add a debug button to window for manual reset if needed
