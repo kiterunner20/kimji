@@ -1081,37 +1081,81 @@ const CategoryTaskList = ({ selectedDay }) => {
   const [editingTask, setEditingTask] = useState(null);
   const [userNotes, setUserNotes] = useState({});
   const [selectedMoods, setSelectedMoods] = useState({});
+  // Add a force update counter
+  const [updateCounter, setUpdateCounter] = useState(0);
   
-  const context = useAppContext();
-  console.log('Context received in CategoryTaskList:', context);
+  const { currentDay, weekPlan = [], dispatch } = useAppContext();
   
-  // IMPORTANT: Declare all variables that will be needed for useEffect here, before any returns
-  const weekPlan = context ? (context.weekPlan || []) : [];
-  const dispatch = context ? (context.dispatch || (() => console.error('Dispatch not available'))) : () => console.error('Dispatch not available');
+  // Use the provided selectedDay prop or fall back to the currentDay from context
+  const effectiveDay = selectedDay !== undefined ? selectedDay : currentDay;
   
-  // Get all tasks for the selected day grouped by category - Define early to use in useEffect
+  console.log('CategoryTaskList: effectiveDay =', effectiveDay, 'selectedDay =', selectedDay, 'currentDay =', currentDay);
+  console.log('Context received in CategoryTaskList:', { currentDay, weekPlanLength: weekPlan.length });
+  
+  // Force refresh when selectedDay changes
+  useEffect(() => {
+    console.log('CategoryTaskList: Day changed to', selectedDay);
+    
+    // Clear any state that depends on the selected day when it changes
+    setOpenCategories([]);
+    setActiveIndex(0);
+    setExpandedTasks([]);
+    
+    // Force a re-render with a new update counter (without creating a dependency loop)
+    setUpdateCounter(prev => prev + 1);
+    
+    if (weekPlan && Array.isArray(weekPlan) && weekPlan.length > 0) {
+      const dayPlan = weekPlan.find(d => d && d.day === effectiveDay);
+      if (!dayPlan) {
+        console.warn(`Day ${effectiveDay} not found in weekPlan`);
+      }
+    }
+  }, [selectedDay, currentDay, effectiveDay, weekPlan]); // Remove updateCounter from dependencies
+  
+  // Also watch for changes to currentDay (as a backup)
+  useEffect(() => {
+    if (selectedDay === undefined && currentDay !== undefined) {
+      // Force a re-render if we're relying on context
+      setUpdateCounter(prev => prev + 1);
+    }
+  }, [currentDay, selectedDay]);
+  
+  // Log the available days in weekPlan
+  useEffect(() => {
+    if (Array.isArray(weekPlan) && weekPlan.length > 0) {
+      console.log('Available days in weekPlan:', weekPlan.map(d => d?.day));
+    }
+  }, [weekPlan]);
+  
+  // Get all tasks for the selected day grouped by category
   const getTasksByCategory = () => {
     if (!Array.isArray(weekPlan) || weekPlan.length === 0) {
       console.log('No weekPlan data available');
       return {};
     }
     
-    const dayData = weekPlan.find(d => d && d.day === selectedDay);
+    console.log(`CategoryTaskList: getTasksByCategory - Searching for day ${effectiveDay} in weekPlan of length ${weekPlan.length}`);
+    console.log('WeekPlan days available:', weekPlan.map(d => d?.day));
+    
+    const dayData = weekPlan.find(d => d && d.day === effectiveDay);
     
     if (!dayData) {
-      console.log(`No day data found for day ${selectedDay}`);
+      console.log(`No day data found for day ${effectiveDay}`);
+      console.log('Available days:', weekPlan.map(d => d?.day).filter(Boolean));
       return {};
     }
     
     if (!Array.isArray(dayData.tasks)) {
-      console.log(`No tasks array found for day ${selectedDay}`);
+      console.log(`No tasks array found for day ${effectiveDay}`);
       return {};
     }
     
-    console.log(`Found ${dayData.tasks.length} tasks for day ${selectedDay}`);
+    console.log(`Found ${dayData.tasks.length} tasks for day ${effectiveDay}`);
+    console.log('Day title:', dayData.title);
     
     const tasksByCategory = {};
     
+    // Group tasks by category
     dayData.tasks.forEach(task => {
       if (!task) return;
       
@@ -1141,8 +1185,8 @@ const CategoryTaskList = ({ selectedDay }) => {
   }, [categories.length]); // Only trigger when categories length changes
   
   // Super defensive check for missing context or context properties
-  if (!context) {
-    console.error('No context available in CategoryTaskList');
+  if (!dispatch) {
+    console.error('No dispatch available in CategoryTaskList');
     return <div>Error: App context not available</div>;
   }
   
@@ -1153,7 +1197,7 @@ const CategoryTaskList = ({ selectedDay }) => {
   if (categories.length === 0) {
     return (
       <EmptyState>
-        No tasks found for day {selectedDay}. Try selecting a different day or adding custom tasks.
+        No tasks found for day {effectiveDay}. Try selecting a different day or adding custom tasks.
       </EmptyState>
     );
   }
@@ -1225,7 +1269,7 @@ const CategoryTaskList = ({ selectedDay }) => {
   };
   
   // Calculate category completion
-  const getCategoryCompletion = (tasks) => {
+const getCategoryCompletion = (tasks) => {
     if (!Array.isArray(tasks) || tasks.length === 0) return { completed: 0, total: 0 };
     
     const completed = tasks.filter(task => task && task.completed).length;
@@ -1274,15 +1318,23 @@ const CategoryTaskList = ({ selectedDay }) => {
   const handleTaskComplete = (taskId, completed) => {
     console.log('Toggling task:', taskId, 'Current completed state:', completed);
     
+    // Store the current expanded categories state
+    const currentOpenCategories = [...openCategories]; 
+    
     // Use a more generic payload to accommodate either action type
     dispatch({
       type: 'TOGGLE_TASK',
       payload: { 
         taskId, 
         dispatch,
-        dayNumber: selectedDay
+        dayNumber: effectiveDay
       }
     });
+    
+    // Ensure openCategories state doesn't change when toggling a task
+    setTimeout(() => {
+      setOpenCategories(currentOpenCategories);
+    }, 0);
   };
   
   return (
@@ -1346,7 +1398,10 @@ const CategoryTaskList = ({ selectedDay }) => {
                           
                           <TaskCheckbox 
                             completed={Boolean(task.completed)}
-                            onClick={() => handleTaskComplete(task.id, task.completed)}
+                            onClick={(e) => {
+                              e.stopPropagation(); // Stop event from bubbling up to category
+                              handleTaskComplete(task.id, task.completed);
+                            }}
                           >
                             {task.completed && <FaCheck />}
                           </TaskCheckbox>

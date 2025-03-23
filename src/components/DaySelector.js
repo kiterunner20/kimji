@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext } from '../context/AppContext';
 import styled from 'styled-components';
-import { FaCalendarAlt, FaCheck, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { FaCalendarAlt, FaCheck, FaChevronLeft, FaChevronRight, FaLock } from 'react-icons/fa';
 
 // Styled components with Material Design principles
 const DaySelectorWrapper = styled.div`
@@ -87,8 +87,9 @@ const ProgressIndicator = styled.div`
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 5px;
+  height: ${props => props.active ? '6px' : '5px'};
   background-color: ${props => props.active ? 'rgba(255, 255, 255, 0.3)' : 'var(--gray-200)'};
+  overflow: hidden;
   
   .dark-mode & {
     background-color: ${props => props.active ? 'rgba(255, 255, 255, 0.3)' : 'var(--gray-700)'};
@@ -103,7 +104,27 @@ const ProgressBar = styled.div`
     props.percent >= 40 ? 'var(--warning)' : 
     'var(--info)'
   };
-  transition: width var(--duration-md) var(--animation-standard);
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  
+  ${props => props.percent > 0 && `
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.15) 50%,
+        transparent 100%
+      );
+      background-size: 200% 100%;
+      animation: shimmer 2s infinite;
+    }
+  `}
   
   ${props => props.percent >= 100 && `
     position: relative;
@@ -126,15 +147,31 @@ const ProgressBar = styled.div`
       }
     }
   `}
+  
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
 `;
 
 const OverallProgress = styled.div`
   padding: var(--spacing-md) var(--spacing-lg);
   text-align: center;
   border-bottom: 1px solid var(--gray-200);
+  background-color: ${props => props.percent >= 80 ? 'rgba(16, 185, 129, 0.05)' : 
+                       props.percent >= 40 ? 'rgba(245, 158, 11, 0.05)' : 
+                       'rgba(99, 102, 241, 0.05)'};
+  transition: background-color 1s ease;
   
   .dark-mode & {
     border-bottom-color: var(--gray-700);
+    background-color: ${props => props.percent >= 80 ? 'rgba(16, 185, 129, 0.1)' : 
+                         props.percent >= 40 ? 'rgba(245, 158, 11, 0.1)' : 
+                         'rgba(99, 102, 241, 0.1)'};
   }
 `;
 
@@ -154,11 +191,13 @@ const ProgressBarContainer = styled.div`
   width: 100%;
   height: 10px;
   background-color: var(--gray-200);
-  border-radius: 5px;
+  border-radius: 10px;
   overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
   
   .dark-mode & {
     background-color: var(--gray-700);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
   }
 `;
 
@@ -167,6 +206,8 @@ const DaysContainer = styled.div`
   align-items: center;
   overflow-x: auto;
   padding: var(--spacing-lg) var(--spacing-md);
+  padding-left: 50px;
+  padding-right: 50px;
   gap: var(--spacing-md);
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -179,6 +220,8 @@ const DaysContainer = styled.div`
   
   @media (max-width: 768px) {
     padding: var(--spacing-md) var(--spacing-sm);
+    padding-left: 45px;
+    padding-right: 45px;
     gap: var(--spacing-sm);
   }
 `;
@@ -194,19 +237,19 @@ const DayCard = styled.div`
   color: ${props => props.active ? 'white' : 'var(--gray-700)'};
   border-radius: var(--border-radius-lg);
   padding: 0.75rem;
-  cursor: pointer;
+  cursor: ${props => props.locked ? 'not-allowed' : 'pointer'};
   position: relative;
   overflow: hidden;
   box-shadow: ${props => props.active ? 'var(--shadow-2)' : 'none'};
   transition: all 250ms cubic-bezier(0.34, 1.56, 0.64, 1);
   
   &:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-2);
+    transform: ${props => props.locked ? 'none' : 'translateY(-3px)'};
+    box-shadow: ${props => props.locked ? 'none' : 'var(--shadow-2)'};
   }
   
   &:active {
-    transform: translateY(-1px);
+    transform: ${props => props.locked ? 'none' : 'translateY(-1px)'};
   }
   
   ${props => props.completed && !props.active && `
@@ -225,6 +268,12 @@ const DayCard = styled.div`
     }
   `}
   
+  ${props => props.locked && `
+    opacity: 0.7;
+    background-color: var(--gray-200);
+    color: var(--gray-500);
+  `}
+  
   .dark-mode & {
     background-color: ${props => props.active ? 'var(--primary)' : 'var(--gray-800)'};
     color: ${props => props.active ? 'white' : 'var(--gray-300)'};
@@ -233,6 +282,12 @@ const DayCard = styled.div`
       background-color: var(--gray-800);
       border: 1px solid var(--success);
       color: var(--gray-300);
+    `}
+    
+    ${props => props.locked && `
+      opacity: 0.7;
+      background-color: var(--gray-900);
+      color: var(--gray-600);
     `}
   }
 `;
@@ -260,60 +315,132 @@ const NavigationButton = styled.button`
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  background-color: white;
-  border: none;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  width: 36px;
-  height: 36px;
+  background-color: var(--primary);
+  color: white;
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
   z-index: 10;
-  box-shadow: var(--shadow-2);
-  opacity: 0.85;
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  cursor: pointer;
+  opacity: 0.9;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
   
   &:hover {
     opacity: 1;
-    transform: translateY(-50%) scale(1.1);
+    transform: translateY(-50%) scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   }
   
   &:active {
     transform: translateY(-50%) scale(0.95);
   }
   
-  &:focus {
-    outline: none;
-  }
-  
   &.prev {
-    left: 10px;
+    left: 15px;
   }
   
   &.next {
-    right: 10px;
+    right: 15px;
   }
   
-  .dark-mode & {
-    background-color: var(--gray-800);
-    color: var(--gray-200);
+  @media (max-width: 768px) {
+    width: 36px;
+    height: 36px;
+    
+    &.prev {
+      left: 12px;
+    }
+    
+    &.next {
+      right: 12px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    width: 32px;
+    height: 32px;
+  }
+  
+  svg {
+    width: 16px;
+    height: 16px;
   }
 `;
 
-const DaySelector = () => {
+const LockIcon = styled.div`
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  color: var(--gray-500);
+  font-size: 14px;
+  
+  .dark-mode & {
+    color: var(--gray-600);
+  }
+`;
+
+const LockedOverlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  
+  .dark-mode & {
+    background-color: rgba(0, 0, 0, 0.2);
+  }
+`;
+
+const TestModeToggle = styled.div`
+  display: flex;
+  justify-content: center;
+  margin-top: var(--spacing-md);
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+  }
+`;
+
+const DaySelector = ({ onDaySelect }) => {
   const { currentDay, weekPlan = [], dispatch } = useAppContext();
   const [activeWeek, setActiveWeek] = useState(Math.ceil(currentDay / 7));
+  // Add a local state to track the selected day
+  const [selectedDayState, setSelectedDayState] = useState(currentDay);
+  // Add test mode state
+  const [testMode, setTestMode] = useState(false);
   
   // Log important state for debugging
   useEffect(() => {
     console.log("DaySelector component rendering with currentDay:", currentDay);
+    console.log("DaySelector component with selectedDayState:", selectedDayState);
     if (weekPlan) {
       console.log("WeekPlan exists with length:", weekPlan.length);
     } else {
       console.log("WeekPlan is null or undefined");
     }
-  }, [currentDay, activeWeek, weekPlan]);
+    
+    // Sync selectedDayState with currentDay from context
+    if (currentDay !== selectedDayState) {
+      setSelectedDayState(currentDay);
+    }
+  }, [currentDay, activeWeek, weekPlan, selectedDayState]);
 
   // Get an array of days for the active week
   const daysInWeek = 7;
@@ -341,21 +468,69 @@ const DaySelector = () => {
   };
 
   // Simple direct click handler
-  const handleDaySelect = (day) => {
-    console.log(`Button clicked for day ${day}`);
+  const handleDaySelect = (day, isLocked) => {
+    // Don't allow selecting locked days
+    if (isLocked) {
+      console.log(`Day ${day} is locked and not selectable yet`);
+      return;
+    }
     
-    if (dispatch) {
-      console.log(`Dispatching SET_DAY action with payload: ${day}`);
+    console.log(`DaySelector: Button clicked for day ${day}`);
+    
+    // Check if weekPlan exists
+    if (!Array.isArray(weekPlan)) {
+      console.error('weekPlan is not an array:', weekPlan);
+      return;
+    }
+    
+    // Check if the day exists in weekPlan
+    const dayPlan = weekPlan.find(d => d && d.day === day);
+    if (!dayPlan) {
+      console.error(`No day plan found for day ${day}`);
+      return;
+    }
+    
+    console.log(`DaySelector: Selected day ${day}: ${dayPlan.title}`);
+    console.log(`DaySelector: Tasks for day ${day}:`, dayPlan.tasks?.length);
+    
+    // Update the local state immediately for UI feedback
+    setSelectedDayState(day);
+    
+    // If onDaySelect prop exists, call it directly
+    if (typeof onDaySelect === 'function') {
+      console.log(`DaySelector: Using onDaySelect prop callback for day ${day}`);
+      onDaySelect(day);
+    }
+    // Otherwise fall back to using dispatch directly (backward compatibility)
+    else if (dispatch) {
+      console.log(`DaySelector: Dispatching SET_DAY action with payload: ${day}`);
       dispatch({ type: 'SET_DAY', payload: day });
       setActiveWeek(Math.ceil(day / 7));
+      
+      // After dispatching, log the current day
+      console.log(`DaySelector: Day selection complete. Day ${day} selected.`);
     } else {
-      console.error('Dispatch function not available');
+      console.error('Neither onDaySelect prop nor dispatch function is available');
     }
   };
 
   // Handle switching between weeks
   const handleWeekChange = (weekNumber) => {
     setActiveWeek(weekNumber);
+    
+    // Calculate first day of the selected week and notify parent component
+    const firstDayOfWeek = (weekNumber - 1) * daysInWeek + 1;
+    
+    // If onDaySelect prop exists, call it to update parent component
+    if (typeof onDaySelect === 'function') {
+      console.log(`DaySelector: Selecting first day of week ${weekNumber}: day ${firstDayOfWeek}`);
+      onDaySelect(firstDayOfWeek);
+    }
+    // Otherwise fall back to using dispatch directly
+    else if (dispatch) {
+      console.log(`DaySelector: Dispatching SET_DAY action for first day of week ${weekNumber}: ${firstDayOfWeek}`);
+      dispatch({ type: 'SET_DAY', payload: firstDayOfWeek });
+    }
   };
 
   // Calculate completion status for each day
@@ -378,23 +553,91 @@ const DaySelector = () => {
 
   // Calculate percentage of completed days
   const getCompletionPercentage = (startDay, endDay) => {
-    if (!weekPlan) return 0;
+    if (!weekPlan || weekPlan.length === 0) {
+      console.log(`No week plan data available for days ${startDay}-${endDay}`);
+      return 0;
+    }
+
+    // Filter the days in the specified range
+    const daysInRange = weekPlan.filter(day => 
+      day.day >= startDay && day.day <= endDay
+    );
     
-    let completedDays = 0;
-    for (let day = startDay; day <= endDay; day++) {
-      if (getDayCompletionStatus(day)) {
-        completedDays++;
-      }
+    if (daysInRange.length === 0) {
+      console.log(`No days found in range ${startDay}-${endDay}`);
+      return 0;
+    }
+
+    let totalTasksCount = 0;
+    let completedTasksCount = 0;
+
+    // Count all tasks and completed tasks
+    daysInRange.forEach(day => {
+      const dayTasks = day.tasks || [];
+      
+      dayTasks.forEach(task => {
+        totalTasksCount++;
+        
+        if (task.completed) {
+          completedTasksCount++;
+        }
+      });
+    });
+
+    // Debug logs
+    console.log(`Progress for days ${startDay}-${endDay}:`);
+    console.log(`- Total tasks: ${totalTasksCount}`);
+    console.log(`- Completed tasks: ${completedTasksCount}`);
+    
+    // Calculate percentage (safeguard against division by zero)
+    if (totalTasksCount === 0) {
+      console.log(`No tasks found for days ${startDay}-${endDay}`);
+      return 0;
     }
     
-    return Math.round((completedDays / (endDay - startDay + 1)) * 100);
+    const percentage = Math.round((completedTasksCount / totalTasksCount) * 100);
+    console.log(`- Completion percentage: ${percentage}%`);
+    
+    return percentage;
   };
 
-  // Calculate overall progress
-  const overallProgress = getCompletionPercentage(1, 21);
-  const week1Progress = getCompletionPercentage(1, 7);
-  const week2Progress = getCompletionPercentage(8, 14);
-  const week3Progress = getCompletionPercentage(15, 21);
+  // Add memoization to prevent unnecessary re-calculation
+  const memoizedGetCompletionPercentage = (startDay, endDay) => {
+    // Use unique key for this calculation
+    const key = `progress-${startDay}-${endDay}`;
+    
+    // Return from cache if already calculated
+    if (progressCache.current[key] !== undefined && !forceProgressUpdate.current) {
+      return progressCache.current[key];
+    }
+    
+    const result = getCompletionPercentage(startDay, endDay);
+    progressCache.current[key] = result;
+    return result;
+  };
+
+  // Add these at the component level
+  const progressCache = useRef({});
+  const forceProgressUpdate = useRef(false);
+
+  // Reset the cache when the weekPlan changes
+  useEffect(() => {
+    progressCache.current = {};
+    forceProgressUpdate.current = true;
+    
+    // Reset the force update flag after a short delay
+    const timer = setTimeout(() => {
+      forceProgressUpdate.current = false;
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [weekPlan]);
+
+  // Calculate overall progress - use the memoized version
+  const overallProgress = memoizedGetCompletionPercentage(1, 21);
+  const week1Progress = memoizedGetCompletionPercentage(1, 7);
+  const week2Progress = memoizedGetCompletionPercentage(8, 14);
+  const week3Progress = memoizedGetCompletionPercentage(15, 21);
 
   // Add scrolling functionality
   const daysContainerRef = useRef(null);
@@ -420,31 +663,120 @@ const DaySelector = () => {
     });
   };
   
-  // Auto-scroll to current day on mount
+  // Add this function to programmatically scroll to a specific week
+  const scrollToActiveWeek = (weekNumber) => {
+    const container = daysContainerRef.current;
+    if (!container) return;
+    
+    // Calculate the scroll position based on the week
+    let scrollPosition;
+    switch (weekNumber) {
+      case 1:
+        scrollPosition = 0;
+        break;
+      case 2:
+        scrollPosition = container.scrollWidth / 3;
+        break;
+      case 3:
+        scrollPosition = (container.scrollWidth / 3) * 2;
+        break;
+      default:
+        scrollPosition = 0;
+    }
+    
+    container.scrollTo({
+      left: scrollPosition,
+      behavior: 'smooth'
+    });
+  };
+
+  // Modify the useEffect to also respond to activeWeek changes
   useEffect(() => {
-    setTimeout(() => {
-      scrollToDay(currentDay);
-    }, 300);
+    scrollToActiveWeek(activeWeek);
+  }, [activeWeek]);
+
+  // Add touch swipe functionality to the days container
+  useEffect(() => {
+    const container = daysContainerRef.current;
+    if (!container) return;
+    
+    let touchStartX = 0;
+    let touchEndX = 0;
+    
+    const handleTouchStart = (e) => {
+      touchStartX = e.touches[0].clientX;
+    };
+    
+    const handleTouchMove = (e) => {
+      touchEndX = e.touches[0].clientX;
+    };
+    
+    const handleTouchEnd = () => {
+      const SWIPE_THRESHOLD = 75; // Minimum distance required for a swipe
+      
+      if (touchStartX - touchEndX > SWIPE_THRESHOLD) {
+        // Swipe Left -> Go to next day
+        scrollRight();
+      } else if (touchEndX - touchStartX > SWIPE_THRESHOLD) {
+        // Swipe Right -> Go to previous day
+        scrollLeft();
+      }
+    };
+    
+    container.addEventListener('touchstart', handleTouchStart);
+    container.addEventListener('touchmove', handleTouchMove);
+    container.addEventListener('touchend', handleTouchEnd);
+    
+    return () => {
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchmove', handleTouchMove);
+      container.removeEventListener('touchend', handleTouchEnd);
+    };
   }, []);
-  
+
+  // Enhance the scroll functions to update the active week when navigating
   const scrollLeft = () => {
     const container = daysContainerRef.current;
     if (container) {
       container.scrollBy({
-        left: -200,
+        left: -210,
         behavior: 'smooth'
       });
+      
+      // Update the active week based on scroll direction
+      if (activeWeek > 1) {
+        setTimeout(() => {
+          setActiveWeek(prev => Math.max(prev - 1, 1));
+        }, 300);
+      }
     }
   };
-  
+
   const scrollRight = () => {
     const container = daysContainerRef.current;
     if (container) {
       container.scrollBy({
-        left: 200,
+        left: 210,
         behavior: 'smooth'
       });
+      
+      // Update the active week based on scroll direction
+      if (activeWeek < 3) {
+        setTimeout(() => {
+          setActiveWeek(prev => Math.min(prev + 1, 3));
+        }, 300);
+      }
     }
+  };
+
+  // Determine if a day is locked (future day that can't be accessed yet)
+  const isDayLocked = (day) => {
+    // In test mode, all days are unlocked
+    if (testMode) {
+      return false;
+    }
+    // In regular mode, only current and previous days are unlocked
+    return day > currentDay;
   };
 
   return (
@@ -453,6 +785,7 @@ const DaySelector = () => {
         <WeekTab 
           active={activeWeek === 1} 
           onClick={() => handleWeekChange(1)}
+          className="week-tab"
         >
           <WeekTabContent>
             <WeekTabTitle>Week 1: Foundation</WeekTabTitle>
@@ -465,6 +798,7 @@ const DaySelector = () => {
         <WeekTab 
           active={activeWeek === 2} 
           onClick={() => handleWeekChange(2)}
+          className="week-tab"
         >
           <WeekTabContent>
             <WeekTabTitle>Week 2: Expansion</WeekTabTitle>
@@ -477,6 +811,7 @@ const DaySelector = () => {
         <WeekTab 
           active={activeWeek === 3} 
           onClick={() => handleWeekChange(3)}
+          className="week-tab"
         >
           <WeekTabContent>
             <WeekTabTitle>Week 3: Mastery</WeekTabTitle>
@@ -488,35 +823,59 @@ const DaySelector = () => {
         </WeekTab>
       </WeekTabsContainer>
       
-      <OverallProgress>
-        <ProgressLabel>Overall Progress: {overallProgress}%</ProgressLabel>
+      <OverallProgress percent={overallProgress}>
+        <ProgressLabel>
+          Overall Progress: {Math.round(overallProgress)}%
+          <TestModeToggle>
+            <label>
+              <input
+                type="checkbox"
+                checked={testMode}
+                onChange={() => setTestMode(!testMode)}
+              />
+              Test Mode {testMode ? '(All Days Unlocked)' : '(Normal Mode)'}
+            </label>
+          </TestModeToggle>
+        </ProgressLabel>
         <ProgressBarContainer>
           <ProgressBar percent={overallProgress} />
         </ProgressBarContainer>
       </OverallProgress>
       
-      <div style={{ position: 'relative' }}>
+      <div style={{ position: 'relative', padding: '0 10px' }}>
         <NavigationButton className="prev" onClick={scrollLeft} aria-label="Scroll left">
           <FaChevronLeft />
         </NavigationButton>
         
         <DaysContainer ref={daysContainerRef}>
           {daysToShow.map((day, index) => {
-            const isActive = day === currentDay;
+            // Use the local state for determining active status
+            const isActive = day === selectedDayState;
             const isCompleted = getDayCompletionStatus(day);
+            const isLocked = isDayLocked(day);
             
             return (
               <DayCard
                 key={day}
                 active={isActive}
                 completed={isCompleted}
-                onClick={() => handleDaySelect(day)}
+                locked={isLocked}
+                onClick={() => handleDaySelect(day, isLocked)}
                 className="day-card"
                 aria-label={`Day ${day}: ${getDayTitle(day)}`}
               >
                 <DayNumber>{day}</DayNumber>
                 <DayName>{getDayTitle(day)}</DayName>
                 <DayDate>{getDateByIndex(day - 1)}</DayDate>
+                
+                {isLocked && (
+                  <>
+                    <LockIcon>
+                      <FaLock />
+                    </LockIcon>
+                    <LockedOverlay />
+                  </>
+                )}
                 
                 <ProgressIndicator active={isActive}>
                   <ProgressBar percent={getCompletionPercentage(day, day)} />

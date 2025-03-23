@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import styled from 'styled-components';
-import { FaSun, FaMoon, FaBars, FaTimes, FaHome, FaChartLine, FaPencilAlt, FaCog, FaRegLightbulb } from 'react-icons/fa';
+import { FaSun, FaMoon, FaBars, FaTimes, FaHome, FaChartLine, FaPencilAlt, FaCog, FaRegLightbulb, FaBriefcase, FaLaptop } from 'react-icons/fa';
 
 const HeaderContainer = styled.header`
   position: sticky;
@@ -237,9 +237,33 @@ const LogoText = styled.span`
   }
 `;
 
+const ModeToggle = styled.button`
+  width: 40px;
+  height: 40px;
+  border-radius: var(--border-radius-circular);
+  border: none;
+  background-color: ${props => (props.isActive ? 'var(--primary)' : 'var(--primary-light)')};
+  color: ${props => (props.isActive ? 'white' : 'var(--primary)')};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-left: var(--spacing-sm);
+  transition: all var(--duration-md) var(--animation-standard);
+  
+  &:hover {
+    transform: rotate(12deg) scale(1.1);
+    box-shadow: 0 0 12px rgba(124, 58, 237, 0.5);
+  }
+
+  svg {
+    font-size: 1.2rem;
+  }
+`;
+
 const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { darkMode, toggleDarkMode } = useAppContext();
+  const { darkMode, toggleDarkMode, workMode, toggleWorkMode } = useAppContext();
   const location = useLocation();
   
   const toggleMenu = () => {
@@ -261,8 +285,8 @@ const Header = () => {
           <Logo to="/">
             <FaRegLightbulb />
             <LogoText>
-              <span className="app-name">Kimji Transform</span>
-              <span className="app-tagline">Challenge</span>
+              <span className="app-name">TransformWeek</span>
+              <span className="app-tagline">21-day habit builder</span>
             </LogoText>
           </Logo>
           
@@ -298,6 +322,15 @@ const Header = () => {
           </MenuItems>
           
           <div style={{ display: 'flex', alignItems: 'center' }}>
+            <ModeToggle
+              onClick={toggleWorkMode}
+              isActive={workMode}
+              aria-label={workMode ? 'Switch to normal mode' : 'Switch to work mode'}
+              title={workMode ? 'Switch to normal mode' : 'Switch to work mode'}
+            >
+              {workMode ? <FaLaptop /> : <FaBriefcase />}
+            </ModeToggle>
+            
             <ThemeToggle 
               onClick={toggleDarkMode} 
               isDarkMode={darkMode}

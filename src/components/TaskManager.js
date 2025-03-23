@@ -863,6 +863,29 @@ const TimeOption = styled.div`
   }
 `;
 
+const TaskOption = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border: 1px solid ${props => props.selected ? 'var(--primary)' : '#ddd'};
+  border-radius: 8px;
+  cursor: pointer;
+  background-color: ${props => props.selected ? 'rgba(99, 102, 241, 0.1)' : 'transparent'};
+  
+  &:hover {
+    background-color: ${props => props.selected ? 'rgba(99, 102, 241, 0.15)' : 'rgba(0,0,0,0.03)'};
+  }
+  
+  .dark-mode & {
+    border-color: ${props => props.selected ? 'var(--primary)' : 'var(--gray-600)'};
+    background-color: ${props => props.selected ? 'rgba(99, 102, 241, 0.2)' : 'transparent'};
+    
+    &:hover {
+      background-color: ${props => props.selected ? 'rgba(99, 102, 241, 0.25)' : 'rgba(255,255,255,0.05)'};
+    }
+  }
+`;
+
 const FormActions = styled.div`
   display: flex;
   justify-content: flex-end;
@@ -918,11 +941,17 @@ const formatTime = (time) => {
   return time;
 };
 
-const TaskManager = () => {
-  const context = useAppContext();
+const TaskManager = ({ selectedDay: propSelectedDay }) => {
+  const { currentDay, weekPlan, dispatch } = useAppContext();
   
-  // Move all hooks to the top level, before any conditionals
-  const [selectedDay, setSelectedDay] = useState(context?.state?.currentDay || 1);
+  // IMPORTANT CHANGE: Use propSelectedDay as the source of truth if provided, otherwise fall back to currentDay
+  // Only initialize the state once, then let it be controlled by props
+  const [selectedDay, setSelectedDay] = useState(propSelectedDay !== undefined ? propSelectedDay : currentDay || 1);
+  
+  // Track if we're in a controlled or uncontrolled mode (based on whether propSelectedDay is provided)
+  const isControlled = propSelectedDay !== undefined;
+  
+  // Keep rest of the state declarations
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [taskFormData, setTaskFormData] = useState({
@@ -932,7 +961,8 @@ const TaskManager = () => {
     taskCategory: 'personal_growth',
     type: 'custom',
     hasReminder: false,
-    time: ''
+    time: '',
+    repeatForAllDays: false
   });
   const [expandedTasks, setExpandedTasks] = useState([]);
   const [activeTaskDetails, setActiveTaskDetails] = useState(null);
@@ -959,36 +989,70 @@ const TaskManager = () => {
   const [menuOpenTaskId, setMenuOpenTaskId] = useState(null);
   const menuRef = useRef(null);
   
-  // Update selectedDay when currentDay changes in the app context
+  // Keep a counter to force re-renders when needed
+  const [updateCounter, setUpdateCounter] = useState(0);
+  
+  // Process selectedDay changes (from props)
   useEffect(() => {
-    if (context?.state?.currentDay) {
-      setSelectedDay(context.state.currentDay);
+    console.log('--------TaskManager selectedDay Change Logic---------');
+    console.log('TaskManager: propSelectedDay =', propSelectedDay);
+    console.log('TaskManager: currentDay from context =', currentDay);
+    console.log('TaskManager: current selectedDay state =', selectedDay);
+
+    // If we're in controlled mode (receiving selectedDay as prop), always use that
+    if (isControlled && propSelectedDay !== selectedDay) {
+      console.log('TaskManager: Controlled mode - updating to prop value:', propSelectedDay);
+      setSelectedDay(propSelectedDay);
+    } 
+    // Only update from context if we're not controlled by props
+    else if (!isControlled && currentDay !== selectedDay) {
+      console.log('TaskManager: Uncontrolled mode - updating from context:', currentDay);
+      setSelectedDay(currentDay);
     }
-  }, [context?.state?.currentDay]);
+    
+    console.log('--------------------------------');
+  }, [propSelectedDay, currentDay, isControlled]);
+  
+  // This effect runs whenever selectedDay actually changes
+  useEffect(() => {
+    console.log('TaskManager: selectedDay state changed to', selectedDay);
+    
+    // Reset UI state that depends on the selected day
+    setExpandedTasks([]);
+    setActiveTaskDetails(null);
+    setActiveTaskMenu(null);
+    setExpandedTaskId(null);
+    
+    // Force a re-render to make sure we get the latest tasks
+    setUpdateCounter(prev => prev + 1);
+  }, [selectedDay]);
   
   // Initialize expanded categories
   useEffect(() => {
     // If there are tasks, get unique categories and initialize expandedCategories state
-    if (context?.state?.weekPlan && context.state.weekPlan.find(d => d?.day === context.state?.currentDay)) {
-      const dayPlan = context.state.weekPlan.find(d => d?.day === context.state?.currentDay);
+    if (weekPlan && Array.isArray(weekPlan)) {
+      const dayPlan = weekPlan.find(d => d?.day === selectedDay);
       if (dayPlan && dayPlan.tasks) {
+        console.log('Found dayPlan for selectedDay', selectedDay, 'with', dayPlan.tasks.length, 'tasks');
         const tasks = dayPlan.tasks;
         const categories = [...new Set(tasks.map(task => task?.taskCategory).filter(Boolean))];
         const initialExpanded = {};
         categories.forEach(category => {
-          initialExpanded[category] = false; // Default to collapsed
+          initialExpanded[category] = true; // Default to expanded for better visibility
         });
         setExpandedCategories(initialExpanded);
+      } else {
+        console.log('No dayPlan found for selectedDay', selectedDay);
       }
     }
-  }, [context?.state?.weekPlan, context?.state?.currentDay]);
+  }, [weekPlan, selectedDay]);
   
   // Add debugging log
   useEffect(() => {
-    if (context?.state?.weekPlan) {
-      console.log('Current weekPlan:', context.state.weekPlan);
-      console.log('Current day:', context.state?.currentDay);
-      const dayPlan = context.state.weekPlan.find(d => d?.day === context.state?.currentDay);
+    if (weekPlan && Array.isArray(weekPlan)) {
+      console.log('Current weekPlan:', weekPlan);
+      console.log('Current day:', currentDay);
+      const dayPlan = weekPlan.find(d => d?.day === currentDay);
       console.log('Current dayPlan:', dayPlan);
       if (dayPlan && dayPlan.tasks) {
         console.log('Tasks for current day:', dayPlan.tasks);
@@ -996,7 +1060,7 @@ const TaskManager = () => {
     } else {
       console.log('weekPlan is undefined or not an array in TaskManager');
     }
-  }, [context?.state?.weekPlan, context?.state?.currentDay]);
+  }, [weekPlan, currentDay]);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -1013,7 +1077,7 @@ const TaskManager = () => {
   }, []);
   
   // Handle the case where context might be undefined initially
-  if (!context) {
+  if (!currentDay) {
     return (
       <div style={{
         padding: '20px',
@@ -1029,15 +1093,21 @@ const TaskManager = () => {
     );
   }
   
-  const { state, dispatch } = context;
-
   const handleCheckboxClick = (e, taskId, completed) => {
     e.stopPropagation();
+    
+    // Store current expanded state
+    const currentExpanded = {...expandedCategories};
     
     dispatch({
       type: 'TOGGLE_TASK_COMPLETE',
       payload: { dayNumber: selectedDay, taskId, completed: !completed }
     });
+    
+    // Ensure expanded categories remain open
+    setTimeout(() => {
+      setExpandedCategories(currentExpanded);
+    }, 0);
   };
 
   const toggleCategory = (category) => {
@@ -1062,7 +1132,8 @@ const TaskManager = () => {
       taskCategory: 'personal_growth',
       type: 'custom',
       hasReminder: false,
-      time: ''
+      time: '',
+      repeatForAllDays: false
     });
   };
 
@@ -1093,8 +1164,13 @@ const TaskManager = () => {
       dispatch({
         type: 'ADD_CUSTOM_TASK',
         payload: {
-          day: state.currentDay,
-          task: newTask
+          day: selectedDay,
+          title: taskTitle,
+          description: taskDescription,
+          taskCategory: taskCategory,
+          category: taskFormData.category,
+          points: 10,
+          repeatForAllDays: false
         }
       });
     }
@@ -1139,12 +1215,12 @@ const TaskManager = () => {
   };
 
   const getTasksByCategory = () => {
-    if (!state || !state.weekPlan) {
+    if (!weekPlan || !weekPlan.find(d => d?.day === selectedDay)) {
       console.log('No state or weekPlan available');
       return {};
     }
     
-    const dayPlan = state.weekPlan.find(d => d.day === selectedDay);
+    const dayPlan = weekPlan.find(d => d.day === selectedDay);
     if (!dayPlan || !dayPlan.tasks) {
       console.log(`No dayPlan or tasks found for day: ${selectedDay}`);
       return {};
@@ -1237,10 +1313,28 @@ const TaskManager = () => {
   // Rendering the task list with error handling
   const renderCategoryTaskList = () => {
     try {
+      // Log important debugging information
+      console.log('renderCategoryTaskList using selectedDay:', selectedDay);
+      console.log('tasksByCategory:', getTasksByCategory());
+      
+      // Find the day plan for the selected day
+      const dayPlan = weekPlan?.find(d => d?.day === selectedDay);
+      console.log('dayPlan found for selectedDay', selectedDay, ':', dayPlan);
+      
+      // Get all categories to display
+      const displayCategories = [
+        'personal_growth', 
+        'emotional_health', 
+        'mental_fitness', 
+        'physical_health', 
+        'relationships', 
+        'social', 
+        'financial', 
+        'mindfulness'
+      ];
+      
       return (
         <div>
-          <SectionTitle>Today's Tasks</SectionTitle>
-          
           <TaskFilters>
             <FilterButton
               active={selectedCategory === 'all'}
@@ -1248,30 +1342,78 @@ const TaskManager = () => {
             >
               <FaListUl /> All Tasks
             </FilterButton>
-            <FilterButton
-              active={selectedCategory === 'personal_growth'}
-              onClick={() => toggleCategory('personal_growth')}
-            >
-              <FaGraduationCap /> Personal Growth
-            </FilterButton>
-            <FilterButton
-              active={selectedCategory === 'emotional_health'}
-              onClick={() => toggleCategory('emotional_health')}
-            >
-              <FaHeartbeat /> Emotional Health
-            </FilterButton>
-            <FilterButton
-              active={selectedCategory === 'mental_fitness'}
-              onClick={() => toggleCategory('mental_fitness')}
-            >
-              <FaBrain /> Mental Fitness
-            </FilterButton>
-            <FilterButton
-              active={selectedCategory === 'physical_health'}
-              onClick={() => toggleCategory('physical_health')}
-            >
-              <FaHeartbeat /> Physical Health
-            </FilterButton>
+            
+            {displayCategories.includes('personal_growth') && (
+              <FilterButton
+                active={selectedCategory === 'personal_growth'}
+                onClick={() => toggleCategory('personal_growth')}
+              >
+                <FaGraduationCap /> Personal Growth
+              </FilterButton>
+            )}
+            
+            {displayCategories.includes('emotional_health') && (
+              <FilterButton
+                active={selectedCategory === 'emotional_health'}
+                onClick={() => toggleCategory('emotional_health')}
+              >
+                <FaHeartbeat /> Emotional Health
+              </FilterButton>
+            )}
+            
+            {displayCategories.includes('mental_fitness') && (
+              <FilterButton
+                active={selectedCategory === 'mental_fitness'}
+                onClick={() => toggleCategory('mental_fitness')}
+              >
+                <FaBrain /> Mental Fitness
+              </FilterButton>
+            )}
+            
+            {displayCategories.includes('physical_health') && (
+              <FilterButton
+                active={selectedCategory === 'physical_health'}
+                onClick={() => toggleCategory('physical_health')}
+              >
+                <FaHeartbeat /> Physical Health
+              </FilterButton>
+            )}
+            
+            {displayCategories.includes('relationships') && (
+              <FilterButton
+                active={selectedCategory === 'relationships'}
+                onClick={() => toggleCategory('relationships')}
+              >
+                <FaUsers /> Relationships
+              </FilterButton>
+            )}
+            
+            {displayCategories.includes('social') && (
+              <FilterButton
+                active={selectedCategory === 'social'}
+                onClick={() => toggleCategory('social')}
+              >
+                <FaGlassCheers /> Social
+              </FilterButton>
+            )}
+            
+            {displayCategories.includes('financial') && (
+              <FilterButton
+                active={selectedCategory === 'financial'}
+                onClick={() => toggleCategory('financial')}
+              >
+                <FaMoneyBillWave /> Financial
+              </FilterButton>
+            )}
+            
+            {displayCategories.includes('mindfulness') && (
+              <FilterButton
+                active={selectedCategory === 'mindfulness'}
+                onClick={() => toggleCategory('mindfulness')}
+              >
+                <FaPrayingHands /> Mindfulness
+              </FilterButton>
+            )}
           </TaskFilters>
           
           {selectedCategory === 'all' ? (
@@ -1377,12 +1519,12 @@ const TaskManager = () => {
                     type: 'ADD_CUSTOM_TASK',
                     payload: {
                       day: selectedDay,
-                      task: {
-                        ...taskFormData,
-                        id: `custom_${Date.now()}`,
-                        completed: false,
-                        points: 10
-                      }
+                      title: taskFormData.title,
+                      description: taskFormData.description,
+                      taskCategory: taskFormData.taskCategory,
+                      category: taskFormData.category,
+                      points: 10,
+                      repeatForAllDays: taskFormData.repeatForAllDays
                     }
                   });
                 }
@@ -1452,6 +1594,42 @@ const TaskManager = () => {
                     </CategoryIcon>
                     <span style={{marginLeft: '8px'}}>Physical Health</span>
                   </CategoryOption>
+                  <CategoryOption
+                    selected={taskFormData.taskCategory === 'relationships'}
+                    onClick={() => setTaskFormData({...taskFormData, taskCategory: 'relationships'})}
+                  >
+                    <CategoryIcon iconBgColor="#3B82F6">
+                      <FaUsers />
+                    </CategoryIcon>
+                    <span style={{marginLeft: '8px'}}>Relationships</span>
+                  </CategoryOption>
+                  <CategoryOption
+                    selected={taskFormData.taskCategory === 'social'}
+                    onClick={() => setTaskFormData({...taskFormData, taskCategory: 'social'})}
+                  >
+                    <CategoryIcon iconBgColor="#0EA5E9">
+                      <FaGlassCheers />
+                    </CategoryIcon>
+                    <span style={{marginLeft: '8px'}}>Social</span>
+                  </CategoryOption>
+                  <CategoryOption
+                    selected={taskFormData.taskCategory === 'financial'}
+                    onClick={() => setTaskFormData({...taskFormData, taskCategory: 'financial'})}
+                  >
+                    <CategoryIcon iconBgColor="#F59E0B">
+                      <FaMoneyBillWave />
+                    </CategoryIcon>
+                    <span style={{marginLeft: '8px'}}>Financial</span>
+                  </CategoryOption>
+                  <CategoryOption
+                    selected={taskFormData.taskCategory === 'mindfulness'}
+                    onClick={() => setTaskFormData({...taskFormData, taskCategory: 'mindfulness'})}
+                  >
+                    <CategoryIcon iconBgColor="#7C3AED">
+                      <FaPrayingHands />
+                    </CategoryIcon>
+                    <span style={{marginLeft: '8px'}}>Mindfulness</span>
+                  </CategoryOption>
                 </CategorySelect>
               </FormGroup>
               
@@ -1477,6 +1655,38 @@ const TaskManager = () => {
                     Evening
                   </TimeOption>
                 </TimeOfDaySelect>
+              </FormGroup>
+              
+              <FormGroup>
+                <FormLabel>Task Duration</FormLabel>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <TaskOption 
+                    selected={!taskFormData.repeatForAllDays}
+                    onClick={() => setTaskFormData({...taskFormData, repeatForAllDays: false})}
+                  >
+                    <input 
+                      type="radio" 
+                      name="taskDuration" 
+                      checked={!taskFormData.repeatForAllDays}
+                      onChange={() => setTaskFormData({...taskFormData, repeatForAllDays: false})}
+                      style={{ marginRight: '8px' }}
+                    />
+                    Current day only
+                  </TaskOption>
+                  <TaskOption 
+                    selected={taskFormData.repeatForAllDays}
+                    onClick={() => setTaskFormData({...taskFormData, repeatForAllDays: true})}
+                  >
+                    <input 
+                      type="radio" 
+                      name="taskDuration" 
+                      checked={taskFormData.repeatForAllDays}
+                      onChange={() => setTaskFormData({...taskFormData, repeatForAllDays: true})}
+                      style={{ marginRight: '8px' }}
+                    />
+                    Repeat for all days (21 days)
+                  </TaskOption>
+                </div>
               </FormGroup>
               
               <FormActions>
