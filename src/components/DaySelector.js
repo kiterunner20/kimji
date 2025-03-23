@@ -206,6 +206,8 @@ const DaysContainer = styled.div`
   align-items: center;
   overflow-x: auto;
   padding: var(--spacing-lg) var(--spacing-md);
+  padding-left: 50px;
+  padding-right: 50px;
   gap: var(--spacing-md);
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -218,6 +220,8 @@ const DaysContainer = styled.div`
   
   @media (max-width: 768px) {
     padding: var(--spacing-md) var(--spacing-sm);
+    padding-left: 45px;
+    padding-right: 45px;
     gap: var(--spacing-sm);
   }
 `;
@@ -337,11 +341,11 @@ const NavigationButton = styled.button`
   }
   
   &.prev {
-    left: 8px;
+    left: 15px;
   }
   
   &.next {
-    right: 8px;
+    right: 15px;
   }
   
   @media (max-width: 768px) {
@@ -349,11 +353,11 @@ const NavigationButton = styled.button`
     height: 36px;
     
     &.prev {
-      left: 5px;
+      left: 12px;
     }
     
     &.next {
-      right: 5px;
+      right: 12px;
     }
   }
   
@@ -513,6 +517,20 @@ const DaySelector = ({ onDaySelect }) => {
   // Handle switching between weeks
   const handleWeekChange = (weekNumber) => {
     setActiveWeek(weekNumber);
+    
+    // Calculate first day of the selected week and notify parent component
+    const firstDayOfWeek = (weekNumber - 1) * daysInWeek + 1;
+    
+    // If onDaySelect prop exists, call it to update parent component
+    if (typeof onDaySelect === 'function') {
+      console.log(`DaySelector: Selecting first day of week ${weekNumber}: day ${firstDayOfWeek}`);
+      onDaySelect(firstDayOfWeek);
+    }
+    // Otherwise fall back to using dispatch directly
+    else if (dispatch) {
+      console.log(`DaySelector: Dispatching SET_DAY action for first day of week ${weekNumber}: ${firstDayOfWeek}`);
+      dispatch({ type: 'SET_DAY', payload: firstDayOfWeek });
+    }
   };
 
   // Calculate completion status for each day
@@ -824,7 +842,7 @@ const DaySelector = ({ onDaySelect }) => {
         </ProgressBarContainer>
       </OverallProgress>
       
-      <div style={{ position: 'relative' }}>
+      <div style={{ position: 'relative', padding: '0 10px' }}>
         <NavigationButton className="prev" onClick={scrollLeft} aria-label="Scroll left">
           <FaChevronLeft />
         </NavigationButton>
